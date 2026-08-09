@@ -230,3 +230,11 @@
   .ai-orb-wrap { right:18px; bottom:28px; }
   .ai-console { height:70vh; }
 }
+
+/* Repository typography system */
+@font-face { font-family:FieldWide; src:url("/fonts/Novecentosanswide-Bold.7ac6f1.woff2") format("woff2"); font-weight:700; font-display:swap; }
+.field-shell,.boot,.detail-page,.settings-panel,.add-modal { font-family:var(--font-cn)!important; }
+.field-title h1,.detail-grid h1,.operation-module h2,.project-module h3,.ai-console h2 { font-family:var(--font-wide)!important; font-weight:700; }
+.field-shell p,.field-shell textarea,.field-shell input,.detail-page p { font-family:var(--font-body)!important; }
+.field-shell small,.field-shell time,.field-shell em,.field-shell dt,.field-shell dd,.field-shell footer,.boot small,.boot b,.boot span,.detail-page small { font-family:var(--font-data)!important; font-variant-numeric:tabular-nums; }
+.field-top b,.field-sidebar nav small,.zone-code,.ai-console>footer { font-family:var(--font-endfield)!important; }
