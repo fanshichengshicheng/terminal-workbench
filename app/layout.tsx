@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./settings.css";
 
 export const metadata: Metadata = {
   title: "终端工作台 / WORKBENCH",

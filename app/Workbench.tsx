@@ -8,6 +8,11 @@ type Entry = {
   lastViewed: string; cover?: string; source?: string; pinned?: boolean; originId?: string;
 };
 type Bubble = { id: string; x: number; y: number; vx: number; vy: number; size: number; base: number; variant: number };
+type Preferences = {
+  theme: "night" | "day"; compact: boolean; showSystem: boolean;
+  density: number; motionSpeed: number; aging: boolean; defaultMode: "drift" | "index";
+};
+const defaultPreferences: Preferences = { theme:"night", compact:false, showSystem:true, density:12, motionSpeed:1, aging:true, defaultMode:"drift" };
 
 const DAY = 86400000;
 const initial: Entry[] = [
@@ -39,7 +44,8 @@ export default function Workbench() {
   const [selected, setSelected] = useState<string | null>(null);
   const [detail, setDetail] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
-  const [density, setDensity] = useState(12);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [prefs, setPrefs] = useState<Preferences>(defaultPreferences);
   const [bubbles, setBubbles] = useState<Bubble[]>(() => makeBubbles(initial));
   const [mouse, setMouse] = useState({ x: -999, y: -999 });
   const zoneRef = useRef<HTMLDivElement>(null);
@@ -50,10 +56,13 @@ export default function Workbench() {
   useEffect(() => {
     const saved = localStorage.getItem("memory-workbench-entries");
     if (saved) { try { setEntries(JSON.parse(saved)); } catch {} }
+    const savedPrefs = localStorage.getItem("memory-workbench-preferences");
+    if (savedPrefs) { try { const p={...defaultPreferences,...JSON.parse(savedPrefs)}; setPrefs(p); setMode(p.defaultMode); } catch {} }
   }, []);
   useEffect(() => { entriesRef.current = entries; localStorage.setItem("memory-workbench-entries", JSON.stringify(entries)); }, [entries]);
+  useEffect(() => { localStorage.setItem("memory-workbench-preferences", JSON.stringify(prefs)); }, [prefs]);
   useEffect(() => { bubbleRef.current = bubbles; }, [bubbles]);
-  useEffect(() => { setBubbles(makeBubbles(entries.filter(e => e.kind === "idea").slice(0, density))); }, [entries, density]);
+  useEffect(() => { setBubbles(makeBubbles(entries.filter(e => e.kind === "idea").slice(0, prefs.density))); }, [entries, prefs.density]);
 
   useEffect(() => {
     let frame = 0;
@@ -67,9 +76,9 @@ export default function Workbench() {
           const proximity = dist < 150 ? Math.max(.08, dist / 150) : 1;
           const target = hoverRef.current === b.id ? 0 : proximity;
           b.vx *= .999; b.vy *= .999;
-          b.x += b.vx * target; b.y += b.vy * target;
+          b.x += b.vx * target * prefs.motionSpeed; b.y += b.vy * target * prefs.motionSpeed;
           const age = daysSince(entriesRef.current.find(e => e.id === b.id)?.lastViewed || new Date().toISOString());
-          if (age > 75) b.y += .025;
+          if (prefs.aging && age > 75) b.y += .025;
           const r = b.size / 2;
           if (b.x < r + 12) { b.x = r + 12; b.vx = Math.abs(b.vx); }
           if (b.x > w - r - 12) { b.x = w-r-12; b.vx = -Math.abs(b.vx); }
@@ -85,7 +94,7 @@ export default function Workbench() {
       frame = requestAnimationFrame(tick);
     };
     frame=requestAnimationFrame(tick); return()=>cancelAnimationFrame(frame);
-  }, [mode, mouse]);
+  }, [mode, mouse, prefs.motionSpeed, prefs.aging]);
 
   const ideas = entries.filter(e => e.kind === "idea");
   const projects = entries.filter(e => e.kind === "project");
@@ -112,24 +121,44 @@ export default function Workbench() {
     <div className="detail-grid"><aside><b>{detailEntry.kind==="idea"?"MEMORY DATA":"PROJECT DATA"}</b><small>ENTRY / {detailEntry.id}</small></aside><section><p className="eyebrow">{detailEntry.kind==="idea"?"灵感档案":"项目档案"}</p><h1>{detailEntry.title}</h1><div className="yellow-line"/><p className="empty-copy">CONTENT MODULE NOT DEPLOYED<br/>内容模块暂未部署</p>{detailEntry.kind==="idea"&&<button className="primary" onClick={()=>convert(detailEntry.id)}>CONVERT TO PROJECT / 转化为项目</button>}</section></div>
   </main>;
 
-  return <main className="shell">
-    <header className="topbar"><div className="brand"><span className="brand-mark">W</span><div><b>WORKBENCH</b><small>个人终端工作台 / LOCAL SYSTEM</small></div></div><div className="system"><span>SYS.ONLINE</span><b>{String(entries.length).padStart(3,"0")}</b><span>{new Date().toLocaleDateString("zh-CN")}</span></div></header>
+  return <main className={`shell ${prefs.compact?"compact":""}`} data-theme={prefs.theme}>
+    <header className="topbar"><div className="brand"><span className="brand-mark">W</span><div><b>WORKBENCH</b><small>个人终端工作台 / LOCAL SYSTEM</small></div></div><div className="top-actions">{prefs.showSystem&&<div className="system"><span>SYS.ONLINE</span><b>{String(entries.length).padStart(3,"0")}</b><span>{new Date().toLocaleDateString("zh-CN")}</span></div>}<button className="settings-trigger" aria-label="打开设置" onClick={()=>setSettingsOpen(true)}><span>⚙</span><small>SETTING</small></button></div></header>
     <nav className="nav"><button className={section==="project"?"active":""} onClick={()=>setSection("project")}><i>01</i> 项目 <em>PROJECT</em></button><button className={section==="idea"?"active":""} onClick={()=>setSection("idea")}><i>02</i> 灵感 <em>MEMORY</em></button><span className="nav-rule"/><button className="square" onClick={()=>setAdding(true)}>＋</button></nav>
 
     {section === "project" ? <section className="project-page"><div className="section-label"><span>01 / PROJECT DATABASE</span><b>{projects.length} UNITS</b></div>{projects.length===0?<div className="empty"><span>NO DEPLOYED PROJECT</span><h2>暂无已部署项目</h2><p>将灵感转化为项目后，它会在这里形成结构化档案。</p><button onClick={()=>setSection("idea")}>OPEN MEMORY / 前往灵感</button></div>:<div className="project-grid">{projects.map(p=><button key={p.id} className="project-card" onClick={()=>setDetail(p.id)}><small>{p.id} / ACTIVE</small><h3>{p.title}</h3><div><span>SOURCE</span><b>{p.originId||"MANUAL"}</b></div><i>OPEN →</i></button>)}</div>}</section> :
-    <section className="memory-page"><div className="section-label"><span>02 / MEMORY FIELD</span><b>{ideas.length} RECORDS</b></div><div className="viewbar"><div><button className={!drawer?"active":""} onClick={()=>setDrawer(false)}>DRIFT / 忆泡</button><button className={drawer?"active":""} onClick={()=>setDrawer(true)}>INDEX / 检索</button></div><span>FIELD DENSITY {density}</span></div>
+    <section className="memory-page"><div className="section-label"><span>02 / MEMORY FIELD</span><b>{ideas.length} RECORDS</b></div><div className="viewbar"><div><button className={!drawer?"active":""} onClick={()=>setDrawer(false)}>DRIFT / 忆泡</button><button className={drawer?"active":""} onClick={()=>setDrawer(true)}>INDEX / 检索</button></div><span>FIELD DENSITY {prefs.density}</span></div>
       <div ref={zoneRef} className={`memory-zone ${mode} ${selected?"focused":""}`} onMouseMove={e=>{const r=e.currentTarget.getBoundingClientRect();setMouse({x:e.clientX-r.left,y:e.clientY-r.top})}} onMouseLeave={()=>setMouse({x:-999,y:-999})}>
         <div className="zone-code">MEMORY FIELD // SAFE AREA<br/>X.024 Y.086</div><div className="dormant-label">DORMANT MEMORY / 静默记忆</div>
         {bubbles.map((b,i)=>{const e=ideas.find(x=>x.id===b.id); if(!e)return null; const indexed=mode==="index"; const cols=Math.max(3,Math.floor((zoneRef.current?.clientWidth||900)/170)); const x=indexed?100+(i%cols)*165:b.x, y=indexed?115+Math.floor(i/cols)*165:b.y;
           return <button key={b.id} className={`bubble v${b.variant} ${selected===b.id?"selected":""} ${selected&&selected!==b.id?"dim":""}`} style={{width:b.size,height:b.size,transform:`translate3d(${x-b.size/2}px,${y-b.size/2}px,0)`}} onMouseEnter={()=>hoverRef.current=b.id} onMouseLeave={()=>hoverRef.current=null} onClick={()=>setSelected(b.id)}><span className="bubble-id">{b.id.replace("MEM-","")}</span><b>{e.title}</b><i/></button>})}
         {current&&<div className="inspector"><small>IDENTIFIED / {current.id}</small><h3>{current.title}</h3><dl><div><dt>CREATED</dt><dd>{current.createdAt}</dd></div><div><dt>LAST VIEW</dt><dd>{daysSince(current.lastViewed)} DAYS AGO</dd></div><div><dt>TAG</dt><dd>{current.tags.join(" / ")}</dd></div></dl><div className="inspector-actions"><button onClick={()=>open(current.id)}>OPEN / 打开</button><button onClick={()=>convert(current.id)}>CONVERT / 转项目</button></div><button className="close" onClick={()=>setSelected(null)}>×</button></div>}
-        <div className="controls"><button onClick={()=>setMode(mode==="hold"?"drift":"hold")} className={mode==="hold"?"on":""}>{mode==="hold"?"▶":"Ⅱ"}<span>{mode==="hold"?"RESUME":"HOLD"}</span></button><button onClick={()=>setMode(mode==="index"?"drift":"index")} className={mode==="index"?"on":""}>▦<span>INDEX</span></button><button onClick={()=>setBubbles(makeBubbles(ideas.slice(0,density)))}>↻<span>REFRESH</span></button></div>
+        <div className="controls"><button onClick={()=>setMode(mode==="hold"?"drift":"hold")} className={mode==="hold"?"on":""}>{mode==="hold"?"▶":"Ⅱ"}<span>{mode==="hold"?"RESUME":"HOLD"}</span></button><button onClick={()=>setMode(mode==="index"?"drift":"index")} className={mode==="index"?"on":""}>▦<span>INDEX</span></button><button onClick={()=>setBubbles(makeBubbles(ideas.slice(0,prefs.density)))}>↻<span>REFRESH</span></button></div>
       </div>
       <aside className={`drawer ${drawer?"open":""}`}><header><div><small>MEMORY RETRIEVAL</small><h2>灵感检索</h2></div><button onClick={()=>setDrawer(false)}>×</button></header><label><span>&gt;</span><input autoFocus={drawer} value={query} onChange={e=>setQuery(e.target.value)} placeholder="输入名称、标签或时间"/></label><div className="filters"><button>ALL</button><button>RECENT</button><button>TAG</button><button>DORMANT</button></div><p className="result-count">RESULT / {String(filtered.length).padStart(3,"0")}</p><div className="results">{filtered.map(e=><button key={e.id} onClick={()=>{setSelected(e.id);setDrawer(false)}}><b>{e.id}</b><span>{e.title}<small>{e.tags.join(" · ")}</small></span><time>{e.createdAt.replaceAll("-",".")}</time></button>)}</div></aside>
     </section>}
-    {adding&&<AddDialog onClose={()=>setAdding(false)} onAdd={addIdea}/>}<footer><span>UNOFFICIAL PERSONAL WORKBENCH</span><span>LOCAL STORAGE / READY</span><span>BUILD 0.1.0</span></footer>
+    {adding&&<AddDialog onClose={()=>setAdding(false)} onAdd={addIdea}/>} {settingsOpen&&<SettingsPanel prefs={prefs} setPrefs={setPrefs} onClose={()=>setSettingsOpen(false)}/>}<footer><span>UNOFFICIAL PERSONAL WORKBENCH</span><span>LOCAL STORAGE / READY</span><span>BUILD 0.2.0</span></footer>
   </main>;
 }
+
+function SettingsPanel({prefs,setPrefs,onClose}:{prefs:Preferences;setPrefs:(p:Preferences)=>void;onClose:()=>void}){
+  const patch=(next:Partial<Preferences>)=>setPrefs({...prefs,...next});
+  return <div className="settings-back" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}><aside className="settings-panel">
+    <header><div><small>SYSTEM CONFIGURATION / 03</small><h2>基础设置</h2></div><button onClick={onClose}>×</button></header>
+    <section><div className="settings-title"><b>GLOBAL</b><span>全局设置</span></div>
+      <div className="setting-row theme-row"><div><b>显示风格</b><small>APPEARANCE</small></div><div className="segmented"><button className={prefs.theme==="night"?"active":""} onClick={()=>patch({theme:"night"})}>● 夜间</button><button className={prefs.theme==="day"?"active":""} onClick={()=>patch({theme:"day"})}>○ 日间</button></div></div>
+      <Toggle label="紧凑界面" code="COMPACT LAYOUT" value={prefs.compact} onChange={v=>patch({compact:v})}/>
+      <Toggle label="显示系统状态" code="SYSTEM TELEMETRY" value={prefs.showSystem} onChange={v=>patch({showSystem:v})}/>
+    </section>
+    <section><div className="settings-title"><b>MEMORY</b><span>灵感模块</span></div>
+      <div className="setting-row range-row"><div><b>同屏忆泡上限</b><small>FIELD DENSITY / {prefs.density}</small></div><input type="range" min="6" max="30" step="1" value={prefs.density} onChange={e=>patch({density:Number(e.target.value)})}/></div>
+      <div className="setting-row range-row"><div><b>漂浮速度</b><small>MOTION SPEED / {prefs.motionSpeed.toFixed(1)}</small></div><input type="range" min="0.4" max="1.8" step="0.1" value={prefs.motionSpeed} onChange={e=>patch({motionSpeed:Number(e.target.value)})}/></div>
+      <Toggle label="启用记忆衰减" code="MEMORY AGING" value={prefs.aging} onChange={v=>patch({aging:v})}/>
+      <div className="setting-row"><div><b>默认展示方式</b><small>DEFAULT VIEW</small></div><div className="segmented"><button className={prefs.defaultMode==="drift"?"active":""} onClick={()=>patch({defaultMode:"drift"})}>漂浮</button><button className={prefs.defaultMode==="index"?"active":""} onClick={()=>patch({defaultMode:"index"})}>静态</button></div></div>
+    </section>
+    <div className="settings-foot"><span>CONFIGURATION SAVED LOCALLY</span><button onClick={()=>setPrefs(defaultPreferences)}>RESTORE DEFAULT / 恢复默认</button></div>
+  </aside></div>
+}
+function Toggle({label,code,value,onChange}:{label:string;code:string;value:boolean;onChange:(v:boolean)=>void}){return <div className="setting-row"><div><b>{label}</b><small>{code}</small></div><button className={`toggle ${value?"on":""}`} onClick={()=>onChange(!value)} aria-pressed={value}><i/><span>{value?"ON":"OFF"}</span></button></div>}
 
 function AddDialog({onClose,onAdd}:{onClose:()=>void;onAdd:(t:string,s:string)=>void}){
   const [title,setTitle]=useState(""); const [source,setSource]=useState("");
