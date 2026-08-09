@@ -47,3 +47,50 @@
   object-position: left center;
   filter: drop-shadow(8px 8px 0 rgba(255,255,255,.08));
 }
+
+.boot .boot-meter {
+  left: 0;
+  right: 0;
+  top: auto;
+  bottom: 0;
+  width: 100%;
+  height: 76px;
+  overflow: hidden;
+  border-top: 1px solid rgba(255,255,255,.22);
+  background: rgba(255,255,255,.035);
+}
+
+.boot .boot-meter i {
+  inset: 0;
+  transform: scaleX(.025);
+  transform-origin: left center;
+}
+
+.boot.loading .boot-meter i {
+  transform: scaleX(1);
+}
+
+.boot .boot-meter b {
+  z-index: 2;
+  left: auto;
+  right: 42px;
+  top: auto;
+  bottom: 14px;
+  color: #fff;
+  font-size: 34px;
+  text-shadow: 0 1px rgba(255,255,255,.24);
+}
+
+.boot .boot-meter span {
+  z-index: 2;
+  left: auto;
+  right: 16px;
+  top: auto;
+  bottom: 20px;
+  color: #fff;
+  font-weight: 800;
+}
+
+.boot .boot-status {
+  bottom: 98px;
+}
