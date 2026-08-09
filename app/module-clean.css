@@ -7,7 +7,54 @@
 }
 
 .memory-module > header > span {
+  margin-left: 18px;
+}
+
+.memory-module > header .memory-actions {
+  display: flex;
   margin-left: auto;
+  gap: 6px;
+  padding-right: 2px;
+}
+
+.memory-module > header .memory-actions button {
+  position: relative;
+  width: 34px;
+  height: 32px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid #8e8e88;
+  background: #f8f8f4;
+  color: #17191c;
+  font-family: var(--font-data) !important;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 #c7c7c1;
+}
+
+.memory-module > header .memory-actions button::after {
+  content: "";
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 4px;
+  height: 4px;
+  background: #777;
+}
+
+.memory-module > header .memory-actions button:hover,
+.memory-module > header .memory-actions button.active {
+  transform: translate(1px,1px);
+  border-color: #111;
+  background: var(--fy);
+  box-shadow: 1px 1px 0 #111;
+}
+
+.memory-module > header .memory-actions button:hover::after,
+.memory-module > header .memory-actions button.active::after {
+  background: #111;
 }
 
 .field-brand {
