@@ -29,3 +29,11 @@
 .field-brand .brand-sub {
   margin-top: 14px;
 }
+
+.field-brand .brand-logo-image {
+  display: block;
+  width: 185px;
+  height: 132px;
+  margin: -8px auto 0;
+  object-fit: contain;
+}
