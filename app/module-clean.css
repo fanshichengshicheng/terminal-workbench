@@ -5,3 +5,16 @@
 .field-sidebar nav button.active {
   background: #fff9b2;
 }
+
+.field-brand {
+  height: 156px;
+  flex-basis: 156px;
+}
+
+.field-brand strong {
+  line-height: 1.02;
+}
+
+.field-brand span {
+  margin-top: 9px;
+}
