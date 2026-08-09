@@ -1,0 +1,7 @@
+.field-sidebar nav button {
+  background: #f8f8f4;
+}
+
+.field-sidebar nav button.active {
+  background: #fff9b2;
+}

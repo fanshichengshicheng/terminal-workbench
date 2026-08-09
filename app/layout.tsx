@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./settings.css";
 import "./frame.css";
+import "./module-clean.css";
 
 export const metadata: Metadata = {
   title: "终端工作台 / WORKBENCH",
