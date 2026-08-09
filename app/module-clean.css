@@ -57,6 +57,28 @@
   background: #111;
 }
 
+.memory-zone > .drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(440px,46%);
+  padding: 24px;
+  overflow: hidden;
+  border-left: 4px solid var(--fy);
+  box-shadow: -10px 0 0 rgba(0,0,0,.28), -24px 0 42px rgba(0,0,0,.32);
+  transform: translateX(102%);
+  transition: transform .34s cubic-bezier(.2,.8,.2,1);
+}
+
+.memory-zone > .drawer.open {
+  transform: translateX(0);
+}
+
+.memory-zone > .drawer .results {
+  max-height: calc(100% - 205px);
+}
+
 .field-brand {
   height: 172px;
   flex-basis: 172px;
