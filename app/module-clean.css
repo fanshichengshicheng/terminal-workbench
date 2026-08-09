@@ -238,3 +238,8 @@
 .field-shell p,.field-shell textarea,.field-shell input,.detail-page p { font-family:var(--font-body)!important; }
 .field-shell small,.field-shell time,.field-shell em,.field-shell dt,.field-shell dd,.field-shell footer,.boot small,.boot b,.boot span,.detail-page small { font-family:var(--font-data)!important; font-variant-numeric:tabular-nums; }
 .field-top b,.field-sidebar nav small,.zone-code,.ai-console>footer { font-family:var(--font-endfield)!important; }
+.field-shell button,.boot button,.detail-page button,.settings-panel button,.add-modal button { font-family:var(--font-cn)!important; }
+.memory-module>header button,.field-sidebar nav button b,.inspector-actions button { font-family:var(--font-cn)!important; font-weight:500; }
+.field-top b,.boot section button,.ai-input button { font-family:var(--font-wide)!important; font-weight:600; }
+.field-top span,.field-brand i,.aux>small,.aux b,.aux span,.memory-module>header>span,.controls button span,.boot-index,.boot-status span,.calendar-nav strong { font-family:var(--font-data)!important; font-variant-numeric:tabular-nums; }
+.controls button span,.field-sidebar nav small,.zone-code,.dormant-label,.boot-status b,.ai-console>footer { font-family:var(--font-endfield)!important; }
