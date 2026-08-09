@@ -6,6 +6,10 @@
   background: #fff9b2;
 }
 
+.memory-module > header > span {
+  margin-left: auto;
+}
+
 .field-brand {
   height: 172px;
   flex-basis: 172px;
