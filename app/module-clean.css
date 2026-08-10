@@ -1,3 +1,8 @@
+.field-shell {
+  --workbench-backdrop: #00ff00;
+  background: var(--workbench-backdrop);
+}
+
 .field-sidebar nav button {
   background: #f8f8f4;
 }
