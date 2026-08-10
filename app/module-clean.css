@@ -910,15 +910,6 @@
 }
 .boot-character-frame::before { left:-1px; top:0; border-left:3px solid var(--fy); border-top:1px solid rgba(255,255,255,.48); }
 .boot-character-frame::after { right:0; bottom:-1px; border-right:1px solid rgba(255,255,255,.48); border-bottom:3px solid var(--fy); }
-.boot-character-frame i {
-  position:absolute;
-  left:-4px;
-  top:39%;
-  width:7px;
-  height:7px;
-  background:#ff8100;
-  transform:rotate(45deg);
-}
 .boot-character-frame b {
   position:absolute;
   right:8px;
