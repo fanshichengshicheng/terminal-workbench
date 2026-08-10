@@ -2,12 +2,32 @@
   --workbench-backdrop: #00ff00;
   position: relative;
   background: var(--workbench-backdrop);
-  grid-template-columns: 1fr;
+  grid-template-columns: 248px 1fr;
 }
 
 .field-shell > .field-main,
 .field-shell > footer {
-  grid-column: 1;
+  grid-column: 2;
+}
+
+.nav-only-sidebar {
+  padding-top: 62px;
+}
+
+.nav-only-sidebar .module-switcher {
+  position: static;
+  width: auto;
+  flex: 1;
+  padding: 22px 12px 14px 27px;
+  overflow: auto;
+  pointer-events: auto;
+}
+
+.nav-only-sidebar .module-switcher button {
+  width: 100%;
+  flex: 0 0 50px;
+  background: #f8f8f4;
+  backdrop-filter: none;
 }
 
 .module-switcher {
