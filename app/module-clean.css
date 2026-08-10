@@ -1,6 +1,12 @@
 .field-shell {
   --workbench-backdrop: #00ff00;
   background: var(--workbench-backdrop);
+  grid-template-columns: 1fr;
+}
+
+.field-shell > .field-main,
+.field-shell > footer {
+  grid-column: 1;
 }
 
 .field-sidebar nav button {
