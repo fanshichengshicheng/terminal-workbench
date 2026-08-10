@@ -794,7 +794,9 @@
 
 /* Launch canvas: black field and a supplied character-derived white silhouette. */
 .boot.boot-empty {
-  background:#030405;
+  background:
+    radial-gradient(circle at 31% 48%,rgba(72,91,93,.18),transparent 27%),
+    linear-gradient(115deg,#020304 0 56%,#080b0c 56% 100%);
   overflow:hidden;
 }
 .boot.boot-empty::before {
@@ -805,12 +807,160 @@
     radial-gradient(ellipse at 50% 48%, rgba(255,255,255,.055), transparent 30%),
     repeating-linear-gradient(135deg, transparent 0 8px, rgba(255,255,255,.014) 8px 9px);
 }
+.boot.boot-empty::after {
+  content:"";
+  position:absolute;
+  z-index:1;
+  inset:0;
+  pointer-events:none;
+  opacity:.28;
+  background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(255,255,255,.035) 3px 4px);
+}
+.boot-ornaments {
+  position:absolute;
+  z-index:2;
+  inset:0;
+  pointer-events:none;
+  color:rgba(255,255,255,.6);
+  font-family:var(--font-data);
+}
+.boot-ornaments::before {
+  content:"";
+  position:absolute;
+  left:8%;
+  top:17%;
+  width:min(47vw,650px);
+  aspect-ratio:1;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:50%;
+  box-shadow:0 0 0 36px rgba(255,255,255,.015),0 0 0 108px rgba(255,255,255,.012);
+}
+.boot-ornaments::after {
+  content:"";
+  position:absolute;
+  right:12%;
+  top:20%;
+  width:26%;
+  height:46%;
+  border-right:1px solid rgba(255,255,255,.08);
+  border-top:1px solid rgba(255,255,255,.08);
+  transform:skewX(-13deg);
+}
+.boot-system-rail {
+  position:absolute;
+  left:24px;
+  right:24px;
+  top:18px;
+  height:34px;
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  align-items:center;
+  gap:18px;
+  padding:0 10px;
+  border-top:1px solid rgba(255,255,255,.22);
+  border-bottom:1px solid rgba(255,255,255,.08);
+  font-size:7px;
+  letter-spacing:.15em;
+}
+.boot-system-rail b {
+  padding:5px 12px;
+  background:var(--fy);
+  color:#111;
+  font:700 8px var(--font-data);
+}
+.boot-system-rail i {
+  height:7px;
+  border-top:1px solid rgba(255,255,255,.28);
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.58) 0 1px,transparent 1px 13px);
+}
+.boot-system-rail span { color:rgba(255,255,255,.48); }
+.boot-yellow-axis {
+  position:absolute;
+  left:0;
+  right:0;
+  top:54%;
+  height:2px;
+  background:linear-gradient(90deg,var(--fy) 0 11%,rgba(255,244,79,.12) 11% 28%,rgba(255,244,79,.65) 28% 76%,transparent 76%);
+  box-shadow:0 8px 0 rgba(255,244,79,.035);
+}
+.boot-yellow-axis::before {
+  content:"";
+  position:absolute;
+  left:7%;
+  top:-8px;
+  width:95px;
+  height:18px;
+  background:repeating-linear-gradient(135deg,rgba(255,244,79,.8) 0 4px,transparent 4px 8px);
+  opacity:.38;
+}
+.boot-character-frame {
+  position:absolute;
+  left:17%;
+  top:15%;
+  width:29%;
+  height:69%;
+  border-left:1px solid rgba(255,255,255,.2);
+  border-bottom:1px solid rgba(255,255,255,.12);
+}
+.boot-character-frame::before,.boot-character-frame::after {
+  content:"";
+  position:absolute;
+  width:48px;
+  height:48px;
+}
+.boot-character-frame::before { left:-1px; top:0; border-left:3px solid var(--fy); border-top:1px solid rgba(255,255,255,.48); }
+.boot-character-frame::after { right:0; bottom:-1px; border-right:1px solid rgba(255,255,255,.48); border-bottom:3px solid var(--fy); }
+.boot-character-frame i {
+  position:absolute;
+  left:-4px;
+  top:39%;
+  width:7px;
+  height:7px;
+  background:#ff8100;
+  transform:rotate(45deg);
+}
+.boot-character-frame b {
+  position:absolute;
+  right:8px;
+  top:8px;
+  color:rgba(255,255,255,.32);
+  font:7px var(--font-data);
+  letter-spacing:.12em;
+}
+.boot-character-frame b::before { content:"OPERATOR / 01"; }
+.boot-target { position:absolute; font:18px/1 var(--font-data); color:rgba(255,255,255,.34); }
+.target-a { left:12%; top:28%; }
+.target-b { left:51%; top:18%; color:rgba(255,244,79,.55); }
+.target-c { right:9%; bottom:24%; }
+.boot-side-code {
+  position:absolute;
+  left:10px;
+  top:24%;
+  writing-mode:vertical-rl;
+  font-size:6px;
+  letter-spacing:.18em;
+  color:rgba(255,255,255,.27);
+}
+.boot-logo-meta {
+  position:absolute;
+  z-index:4;
+  left:57%;
+  top:66%;
+  width:28%;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding-top:7px;
+  border-top:1px solid rgba(255,255,255,.28);
+}
+.boot-logo-meta b { color:var(--fy); font:700 7px var(--font-data); letter-spacing:.13em; }
+.boot-logo-meta span { font-size:6px; letter-spacing:.12em; color:rgba(255,255,255,.35); }
 .boot-walker {
   position:absolute;
   z-index:3;
-  left:35%;
-  top:50%;
-  width:min(34vw,430px);
+  left:32%;
+  top:49%;
+  width:min(31vw,400px);
   min-width:230px;
   aspect-ratio:1/1.48;
   transform:translate(-50%,-50%);
@@ -824,9 +974,9 @@
 .boot-title-logo {
   position:absolute;
   z-index:3;
-  left:66%;
-  top:50%;
-  width:min(27vw,390px);
+  left:69%;
+  top:47%;
+  width:min(29vw,420px);
   min-width:230px;
   height:auto;
   transform:translate(-50%,-50%);
