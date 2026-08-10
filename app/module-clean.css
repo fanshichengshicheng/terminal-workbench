@@ -808,7 +808,7 @@
 .boot-walker {
   position:absolute;
   z-index:3;
-  left:50%;
+  left:35%;
   top:50%;
   width:min(34vw,430px);
   min-width:230px;
@@ -838,6 +838,18 @@
   object-fit:contain;
   filter:drop-shadow(0 0 7px rgba(255,255,255,.14));
 }
+.boot-title-logo {
+  position:absolute;
+  z-index:3;
+  left:66%;
+  top:50%;
+  width:min(27vw,390px);
+  min-width:230px;
+  height:auto;
+  transform:translate(-50%,-50%);
+  object-fit:contain;
+  filter:drop-shadow(6px 7px 0 rgba(255,255,255,.08));
+}
 @keyframes walker-step {
   0%,100% { transform:translate(-9px, 0) rotate(-.7deg) scaleY(1); }
   25% { transform:translate(0, -7px) rotate(.5deg) scaleY(1.012); }
@@ -854,5 +866,6 @@
   100% { transform:scaleX(.55); opacity:.15; }
 }
 @media (max-width:700px) {
-  .boot-walker { width:58vw; min-width:190px; }
+  .boot-walker { left:31%; width:54vw; min-width:180px; }
+  .boot-title-logo { left:72%; width:37vw; min-width:150px; }
 }
