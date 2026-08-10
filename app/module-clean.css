@@ -1,7 +1,5 @@
 .field-shell {
-  --workbench-backdrop: #00ff00;
   position: relative;
-  background: var(--workbench-backdrop);
   grid-template-columns: 248px 1fr;
 }
 
