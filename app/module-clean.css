@@ -815,23 +815,6 @@
   aspect-ratio:1/1.48;
   transform:translate(-50%,-50%);
 }
-.boot-walker::before {
-  content:"";
-  position:absolute;
-  z-index:-1;
-  left:11%; right:11%; bottom:3%; height:8%;
-  border-radius:50%;
-  background:radial-gradient(ellipse, rgba(255,255,255,.2), transparent 68%);
-  filter:blur(10px);
-  animation:walker-shadow 1.15s ease-in-out infinite;
-}
-.boot-walker::after {
-  content:"";
-  position:absolute;
-  left:-18%; right:-18%; bottom:0; height:1px;
-  background:linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
-  animation:walker-scan 1.15s linear infinite;
-}
 .boot-walker img {
   display:block;
   width:100%; height:100%;
@@ -855,15 +838,6 @@
   25% { transform:translate(0, -7px) rotate(.5deg) scaleY(1.012); }
   50% { transform:translate(9px, 0) rotate(.7deg) scaleY(1); }
   75% { transform:translate(0, -5px) rotate(-.4deg) scaleY(1.008); }
-}
-@keyframes walker-shadow {
-  0%,100% { transform:scaleX(.84); opacity:.32; }
-  50% { transform:scaleX(1); opacity:.66; }
-}
-@keyframes walker-scan {
-  0% { transform:scaleX(.55); opacity:.15; }
-  50% { transform:scaleX(1); opacity:.75; }
-  100% { transform:scaleX(.55); opacity:.15; }
 }
 @media (max-width:700px) {
   .boot-walker { left:31%; width:54vw; min-width:180px; }
