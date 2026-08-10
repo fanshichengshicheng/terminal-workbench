@@ -833,6 +833,61 @@
   object-fit:contain;
   filter:drop-shadow(6px 7px 0 rgba(255,255,255,.08));
 }
+.boot-continue {
+  position:absolute;
+  z-index:5;
+  right:0;
+  top:61%;
+  width:260px;
+  height:34px;
+  padding:0 22px 0 34px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  border:0;
+  border-bottom:2px solid rgba(255,255,255,.8);
+  background:linear-gradient(90deg,rgba(255,244,79,.16),var(--fy) 42% 100%);
+  color:#111;
+  font:800 10px var(--font-cn);
+  letter-spacing:.04em;
+  cursor:pointer;
+  opacity:0;
+  transform:translateX(20px);
+  pointer-events:none;
+  transition:opacity .24s ease,transform .24s ease,filter .15s ease;
+}
+.boot-continue::before {
+  content:"";
+  position:absolute;
+  right:0;
+  bottom:-7px;
+  width:88%;
+  height:4px;
+  background:linear-gradient(90deg,transparent,rgba(255,244,79,.42));
+}
+.boot-continue span {
+  display:grid;
+  place-items:center;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:#111;
+  color:#fff;
+  font:9px/1 var(--font-data);
+}
+.boot.ready { cursor:pointer; }
+.boot.ready .boot-continue {
+  opacity:1;
+  transform:translateX(0);
+  pointer-events:auto;
+  animation:boot-continue-pulse 1.8s ease-in-out infinite;
+}
+.boot.ready .boot-continue:hover { filter:brightness(1.12); }
+@keyframes boot-continue-pulse {
+  0%,100% { box-shadow:0 0 0 rgba(255,244,79,0); }
+  50% { box-shadow:-18px 0 32px rgba(255,244,79,.2); }
+}
 .boot-progress {
   position:absolute;
   z-index:4;
@@ -872,6 +927,7 @@
 @media (max-width:700px) {
   .boot-walker { left:31%; width:54vw; min-width:180px; }
   .boot-title-logo { left:72%; width:37vw; min-width:150px; }
+  .boot-continue { width:210px; top:66%; }
   .boot-progress { width:72vw; }
   .boot-progress p { font-size:10px; }
 }
