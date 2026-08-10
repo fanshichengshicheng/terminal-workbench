@@ -837,8 +837,6 @@
   width:100%; height:100%;
   object-fit:contain;
   filter:drop-shadow(0 0 7px rgba(255,255,255,.14));
-  animation:walker-step 1.15s ease-in-out infinite;
-  transform-origin:50% 92%;
 }
 @keyframes walker-step {
   0%,100% { transform:translate(-9px, 0) rotate(-.7deg) scaleY(1); }
