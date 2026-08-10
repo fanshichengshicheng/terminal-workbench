@@ -989,7 +989,8 @@
 .boot-continue {
   position:absolute;
   z-index:5;
-  right:0;
+  left:69%;
+  right:auto;
   top:61%;
   width:260px;
   height:34px;
@@ -1006,7 +1007,7 @@
   letter-spacing:.04em;
   cursor:pointer;
   opacity:0;
-  transform:translateX(20px);
+  transform:translate(-50%,10px);
   pointer-events:none;
   transition:opacity .24s ease,transform .24s ease,filter .15s ease;
 }
@@ -1032,7 +1033,7 @@
 .boot.ready { cursor:pointer; }
 .boot.ready .boot-continue {
   opacity:1;
-  transform:translateX(0);
+  transform:translate(-50%,0);
   pointer-events:auto;
   animation:boot-continue-pulse 1.8s ease-in-out infinite;
 }
@@ -1168,7 +1169,7 @@
 @media (max-width:700px) {
   .boot-walker { left:31%; width:54vw; min-width:180px; }
   .boot-title-logo { left:72%; width:37vw; min-width:150px; }
-  .boot-continue { width:210px; top:66%; }
+  .boot-continue { left:72%; width:210px; top:66%; }
   .boot-progress { width:72vw; }
   .boot-progress p { font-size:10px; }
   .boot-utilities { left:10px; bottom:38px; }
