@@ -837,7 +837,7 @@
   position:absolute;
   z-index:4;
   left:50%;
-  bottom:28px;
+  bottom:10px;
   width:min(68vw,980px);
   transform:translateX(-50%);
   color:#fff;
@@ -863,32 +863,6 @@
   background:#fff;
   box-shadow:0 0 6px rgba(255,255,255,.44);
 }
-.boot-radar {
-  position:absolute;
-  right:-47px;
-  bottom:-7px;
-  width:28px;
-  height:28px;
-  border:2px solid rgba(255,255,255,.38);
-  border-radius:50%;
-  background:conic-gradient(from 0deg, #fff, rgba(255,255,255,.06) 24%, transparent 28% 76%, rgba(255,255,255,.8) 82%, #fff);
-  animation:boot-radar-spin 1s linear infinite;
-}
-.boot-radar::before {
-  content:"";
-  position:absolute;
-  inset:5px;
-  border:1px solid rgba(255,255,255,.58);
-  border-radius:50%;
-}
-.boot-radar b {
-  position:absolute;
-  inset:10px;
-  border-radius:50%;
-  background:#fff;
-  box-shadow:0 0 8px rgba(255,255,255,.85);
-}
-@keyframes boot-radar-spin { to { transform:rotate(360deg); } }
 @keyframes walker-step {
   0%,100% { transform:translate(-9px, 0) rotate(-.7deg) scaleY(1); }
   25% { transform:translate(0, -7px) rotate(.5deg) scaleY(1.012); }
