@@ -791,3 +791,7 @@
   .boot-system { right:18px; top:16px; }
   .boot-meter { left:12%; right:16%; }
 }
+
+/* Empty launch canvas — elements will be rebuilt one at a time. */
+.boot.boot-empty { background:#fff; }
+.boot.boot-empty::before { display:none; }
