@@ -1,5 +1,6 @@
 .field-shell {
   --workbench-backdrop: #00ff00;
+  position: relative;
   background: var(--workbench-backdrop);
   grid-template-columns: 1fr;
 }
@@ -7,6 +8,78 @@
 .field-shell > .field-main,
 .field-shell > footer {
   grid-column: 1;
+}
+
+.module-switcher {
+  position: absolute;
+  z-index: 36;
+  left: 18px;
+  top: 82px;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  pointer-events: none;
+}
+
+.module-switcher button {
+  pointer-events: auto;
+  position: relative;
+  height: 50px;
+  display: grid;
+  grid-template-columns: 38px 1fr auto;
+  align-items: center;
+  padding: 0 10px 0 0;
+  border: 1px solid rgba(17,19,22,.42);
+  background: rgba(248,248,244,.9);
+  color: #24272b;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 rgba(0,0,0,.24);
+  backdrop-filter: blur(4px);
+  transition: transform .16s ease,background .16s ease,box-shadow .16s ease;
+}
+
+.module-switcher button em {
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-right: 1px solid #777;
+  font-family: var(--font-data);
+  font-size: 8px;
+  font-style: normal;
+}
+
+.module-switcher button b {
+  padding-left: 11px;
+  font-family: var(--font-cn);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.module-switcher button small {
+  font-family: var(--font-endfield);
+  font-size: 7px;
+  letter-spacing: .1em;
+  color: #777;
+}
+
+.module-switcher button:hover,
+.module-switcher button.active {
+  transform: translate(3px,-2px);
+  background: rgba(255,249,178,.95);
+  border-color: #111;
+  box-shadow: -5px 0 0 var(--fy),3px 5px 0 #111;
+}
+
+.module-switcher button.active::after {
+  content: "";
+  position: absolute;
+  right: -1px;
+  top: -1px;
+  width: 7px;
+  height: 7px;
+  background: #111;
 }
 
 .field-sidebar nav button {
