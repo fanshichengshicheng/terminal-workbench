@@ -888,6 +888,93 @@
   0%,100% { box-shadow:0 0 0 rgba(255,244,79,0); }
   50% { box-shadow:-18px 0 32px rgba(255,244,79,.2); }
 }
+.boot-utilities {
+  position:absolute;
+  z-index:6;
+  left:20px;
+  bottom:42px;
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+.boot-utilities button {
+  height:32px;
+  padding:0 11px 0 9px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  border:1px solid rgba(255,255,255,.28);
+  background:rgba(11,14,15,.78);
+  color:rgba(255,255,255,.76);
+  font:700 9px var(--font-cn);
+  letter-spacing:.06em;
+  cursor:pointer;
+  transition:border-color .15s ease,color .15s ease,background .15s ease;
+}
+.boot-utilities button:hover {
+  border-color:var(--fy);
+  background:rgba(255,244,79,.1);
+  color:#fff;
+}
+.boot-utilities button>i {
+  position:relative;
+  display:block;
+  width:20px;
+  height:20px;
+  flex:0 0 20px;
+  font-style:normal;
+}
+.boot-exit-icon {
+  border:2px solid currentColor;
+  border-left-color:transparent;
+  border-radius:2px;
+}
+.boot-exit-icon::before {
+  content:"";
+  position:absolute;
+  left:-5px;
+  top:8px;
+  width:12px;
+  height:2px;
+  background:currentColor;
+}
+.boot-exit-icon::after {
+  content:"";
+  position:absolute;
+  left:-6px;
+  top:5px;
+  width:6px;
+  height:6px;
+  border-left:2px solid currentColor;
+  border-bottom:2px solid currentColor;
+  transform:rotate(45deg);
+}
+.boot-speaker-icon::before {
+  content:"";
+  position:absolute;
+  left:1px;
+  top:6px;
+  width:14px;
+  height:9px;
+  background:currentColor;
+  clip-path:polygon(0 28%,35% 28%,82% 0,82% 100%,35% 72%,0 72%);
+}
+.boot-speaker-icon::after {
+  content:"";
+  position:absolute;
+  right:0;
+  top:4px;
+  width:8px;
+  height:12px;
+  border-right:2px solid currentColor;
+  border-radius:50%;
+}
+.boot-utilities button.muted .boot-speaker-icon {
+  opacity:.55;
+}
+.boot-utilities button.muted .boot-speaker-icon {
+  background:linear-gradient(45deg,transparent 46%,currentColor 47% 53%,transparent 54%);
+}
 .boot-progress {
   position:absolute;
   z-index:4;
@@ -930,4 +1017,6 @@
   .boot-continue { width:210px; top:66%; }
   .boot-progress { width:72vw; }
   .boot-progress p { font-size:10px; }
+  .boot-utilities { left:10px; bottom:38px; }
+  .boot-utilities button { padding-right:8px; font-size:8px; }
 }
