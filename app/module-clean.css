@@ -833,6 +833,62 @@
   object-fit:contain;
   filter:drop-shadow(6px 7px 0 rgba(255,255,255,.08));
 }
+.boot-progress {
+  position:absolute;
+  z-index:4;
+  left:50%;
+  bottom:28px;
+  width:min(68vw,980px);
+  transform:translateX(-50%);
+  color:#fff;
+}
+.boot-progress p {
+  margin:0 0 9px;
+  text-align:center;
+  font:700 13px/1 var(--font-cn);
+  letter-spacing:.03em;
+}
+.boot-progress-track {
+  position:relative;
+  height:5px;
+  overflow:hidden;
+  background:
+    radial-gradient(circle, rgba(255,255,255,.42) 1.2px, transparent 1.8px) 0 50% / 8px 5px repeat-x;
+}
+.boot-progress-track i {
+  position:absolute;
+  inset:0 auto 0 0;
+  width:94.44%;
+  display:block;
+  background:#fff;
+  box-shadow:0 0 6px rgba(255,255,255,.44);
+}
+.boot-radar {
+  position:absolute;
+  right:-47px;
+  bottom:-7px;
+  width:28px;
+  height:28px;
+  border:2px solid rgba(255,255,255,.38);
+  border-radius:50%;
+  background:conic-gradient(from 0deg, #fff, rgba(255,255,255,.06) 24%, transparent 28% 76%, rgba(255,255,255,.8) 82%, #fff);
+  animation:boot-radar-spin 1s linear infinite;
+}
+.boot-radar::before {
+  content:"";
+  position:absolute;
+  inset:5px;
+  border:1px solid rgba(255,255,255,.58);
+  border-radius:50%;
+}
+.boot-radar b {
+  position:absolute;
+  inset:10px;
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 0 8px rgba(255,255,255,.85);
+}
+@keyframes boot-radar-spin { to { transform:rotate(360deg); } }
 @keyframes walker-step {
   0%,100% { transform:translate(-9px, 0) rotate(-.7deg) scaleY(1); }
   25% { transform:translate(0, -7px) rotate(.5deg) scaleY(1.012); }
@@ -842,4 +898,6 @@
 @media (max-width:700px) {
   .boot-walker { left:31%; width:54vw; min-width:180px; }
   .boot-title-logo { left:72%; width:37vw; min-width:150px; }
+  .boot-progress { width:72vw; }
+  .boot-progress p { font-size:10px; }
 }
