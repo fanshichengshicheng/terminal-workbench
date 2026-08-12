@@ -35,6 +35,15 @@ yarn-error.log*
 .vercel
 
 /dist/
+/dist-desktop/
+/src-tauri/target/
 /.wrangler/
 /outputs/
 /work/
+
+# local workbench runtime artifacts
+.codex-*.log
+.codex-eslint-plan.json
+tsconfig.tsbuildinfo
+/music/
+/public/music/

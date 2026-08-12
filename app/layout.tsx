@@ -3,6 +3,8 @@ import "./globals.css";
 import "./settings.css";
 import "./frame.css";
 import "./module-clean.css";
+import "./project-workspace.css";
+import "@xyflow/react/dist/style.css";
 
 export const metadata: Metadata = {
   title: "终端工作台 / WORKBENCH",
