@@ -4,6 +4,7 @@ import "./settings.css";
 import "./frame.css";
 import "./module-clean.css";
 import "./project-workspace.css";
+import "./endfield-theme.css";
 import "@xyflow/react/dist/style.css";
 
 export const metadata: Metadata = {
