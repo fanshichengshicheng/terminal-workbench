@@ -8,7 +8,7 @@
   <img src="public/brand-logo-preview.png" alt="Terminal Workbench" width="240" />
 </p>
 
-Terminal Workbench is a local project workspace for Windows that brings project management, creative notes, daily planning, calendars, local tool launching, a visual canvas, and Codex conversations into one desktop application.
+Terminal Workbench is a local Windows project workspace inspired by the visual language of *Arknights: Endfield*. Its signature Memory Bubbles let ideas drift, connect, age, and turn into projects, while Codex conversations, background tasks, project canvases, daily planning, calendars, and local tools live together in one desktop application.
 
 Current version: `0.2.7`
 
@@ -23,6 +23,15 @@ Maintainer: [@fanshichengshicheng](https://github.com/fanshichengshicheng)
 </p>
 
 > The installer is not currently code-signed, so Windows may display a security warning.
+
+## Signature Feature: Memory Bubbles
+
+Memory Bubbles are the core way Terminal Workbench organizes ideas and projects, rather than simply presenting another list of notes.
+
+- Let ideas float freely as bubbles in Wander view to create a more spatial writing environment
+- Connect related notes and inspect their relationships through Local Graph and Global Graph views
+- Allow long-unvisited bubbles to become dormant or sink, while pinning important ideas prevents aging
+- Turn a mature idea directly into a project workspace and continue the work with the canvas and Codex
 
 ## Design Note
 
@@ -57,12 +66,13 @@ This project is not affiliated with Hypergryph or the official *Arknights: Endfi
 
 ## Features
 
+- Organize ideas with Memory Bubbles that support wandering, connections, aging, and project conversion
 - Multiple project workspaces with independent local project directories
 - Local Codex conversations with streaming responses, command execution, file edits, and approvals
 - A background task center that keeps work running after leaving a project page
 - A visual canvas with text, images, response cards, freehand drawing, and node connections
 - Chat image attachments, historical image rendering, and collapsible operation records
-- A creative knowledge base, note relationship graphs, daily plans, and calendar synchronization
+- A creative knowledge base, local and global relationship graphs, daily plans, and calendar synchronization
 - Quick launching for Windows applications, shortcuts, scripts, URLs, and folders
 - API keys stored in Windows Credential Manager instead of project files
 
