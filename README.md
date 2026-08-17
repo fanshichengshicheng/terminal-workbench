@@ -12,6 +12,16 @@
 
 当前版本：`0.2.7`
 
+## 下载安装
+
+<p align="center">
+  <a href="https://github.com/fanshichengshicheng/terminal-workbench/releases/download/v0.2.7/terminal-workbench_0.2.7_x64-setup.exe"><strong>下载 Windows x64 安装包（v0.2.7）</strong></a>
+  <br />
+  <a href="https://github.com/fanshichengshicheng/terminal-workbench/releases/latest">查看最新版本与更新说明</a>
+</p>
+
+> 安装程序目前尚未进行数字签名，Windows 可能会显示安全提醒。
+
 ## 设计说明
 
 本项目尝试参考并复现《明日方舟：终末地》的视觉设计语言，是一次非官方的个人风格化实践。最终呈现或许没有做到完全还原，但从配色、排版到交互细节都已经尽力打磨。

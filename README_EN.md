@@ -12,6 +12,16 @@ Terminal Workbench is a local project workspace for Windows that brings project 
 
 Current version: `0.2.7`
 
+## Download
+
+<p align="center">
+  <a href="https://github.com/fanshichengshicheng/terminal-workbench/releases/download/v0.2.7/terminal-workbench_0.2.7_x64-setup.exe"><strong>Download the Windows x64 installer (v0.2.7)</strong></a>
+  <br />
+  <a href="https://github.com/fanshichengshicheng/terminal-workbench/releases/latest">View the latest release and release notes</a>
+</p>
+
+> The installer is not currently code-signed, so Windows may display a security warning.
+
 ## Design Note
 
 This project is an unofficial, personal attempt to reference and recreate the visual design language of *Arknights: Endfield*. The result may not be a perfect reproduction, but a great deal of care has gone into its colors, typography, layout, and interaction details.
