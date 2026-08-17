@@ -12,6 +12,8 @@
 
 当前版本：`0.2.7`
 
+维护者：[@fanshichengshicheng](https://github.com/fanshichengshicheng)
+
 ## 下载安装
 
 <p align="center">

@@ -12,6 +12,8 @@ Terminal Workbench is a local project workspace for Windows that brings project 
 
 Current version: `0.2.7`
 
+Maintainer: [@fanshichengshicheng](https://github.com/fanshichengshicheng)
+
 ## Download
 
 <p align="center">
