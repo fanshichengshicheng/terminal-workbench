@@ -7,7 +7,7 @@ export type StoredProjectThread = {
 
 export type StoredCanvasNode = {
   id: string;
-  type: "note" | "image" | "response";
+  type: "note" | "image" | "response" | "doodle";
   position: { x: number; y: number };
   data: Record<string, unknown>;
   width?: number;
@@ -24,6 +24,7 @@ export type ProjectWorkspaceState = {
   projectDirectory: string;
   threads: StoredProjectThread[];
   activeThreadId: string | null;
+  assistantChats?: Record<string, Array<{ id: string; role: "user" | "assistant"; text: string }>>;
   nodes: StoredCanvasNode[];
   edges: StoredCanvasEdge[];
 };

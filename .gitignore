@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/package-lock.json
 /.pnp
 .pnp.*
 .yarn/*
@@ -37,6 +38,9 @@ yarn-error.log*
 /dist/
 /dist-desktop/
 /src-tauri/target/
+/src-tauri/resources/
+/src-tauri/gen/
+/.cargo/
 /.wrangler/
 /outputs/
 /work/
@@ -47,3 +51,4 @@ yarn-error.log*
 tsconfig.tsbuildinfo
 /music/
 /public/music/
+*.docx

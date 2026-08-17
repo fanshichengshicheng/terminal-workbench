@@ -1,100 +1,71 @@
-# vinext-starter
+# 终端工作台
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+终端工作台是一款面向 Windows 的本机项目工作区，将项目管理、创作笔记、今日计划、日历、本机工具启动器、可视化画布和 Codex 对话整合在同一个桌面应用中。
 
-## Prerequisites
+当前版本：`0.2.7`
 
+## 主要功能
+
+- 多项目工作区与独立项目目录
+- 本机 Codex 对话、流式回复、命令执行、文件修改与审批
+- 后台任务中心，离开项目页面后任务仍可继续
+- 画布文字、图片、回复卡片、自由涂鸦和节点连线
+- 聊天图片附件、历史图片回显和操作记录折叠
+- 创作知识库、笔记关系图谱、今日计划与月历同步
+- Windows 应用、快捷方式、脚本、网址和文件夹快捷启动
+- API Key 使用 Windows Credential Manager 保存，不写入项目文件
+
+## 系统要求
+
+- Windows 10/11 x64
 - Node.js `>=22.13.0`
+- pnpm
+- Rust 与 Tauri 2 所需的 Windows 构建工具（仅从源码构建时需要）
 
-## Quick Start
+## 本地开发
 
-```bash
-npm install
-npm run dev
-npm run build
+```powershell
+pnpm install
+pnpm desktop:dev
 ```
 
-This starter does not use `wrangler.jsonc`.
+只运行网页界面：
 
-## Included Shape
-
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
-
-## Workspace Auth Headers
-
-Signed-in visitors receive both `oai-authenticated-user-id` and `oai-authenticated-user-email`. Private Sites require every visitor to sign in; public Sites may also have anonymous visitors, for whom neither header is present.
-
-The user ID is stable for the same user on the same Site and different across Sites. Email and name are intended for display or contact purposes.
-
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
-
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const userId = requestHeaders.get("oai-authenticated-user-id");
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
+```powershell
+pnpm desktop:web:dev
 ```
 
-## Optional Dispatch-Owned ChatGPT Sign-In
+## 构建 Windows 安装包
 
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
+```powershell
+pnpm install
+pnpm desktop:build
+```
 
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
+安装包输出到：
 
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
+```text
+src-tauri/target/release/bundle/nsis/
+```
 
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
+构建前，`scripts/prepare-codex-sidecar.mjs` 会从已安装的官方 `@openai/codex` npm 依赖中准备 Windows Codex 运行时。`src-tauri/resources/` 是生成目录，不进入 Git 仓库。
 
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
+## 数据与隐私
 
-## Useful Commands
+- 项目、计划、笔记与画布数据保存在本机浏览器存储或 IndexedDB 中。
+- 第三方模型 API Key 在桌面版中保存到 Windows Credential Manager。
+- `.env`、本机日志、构建缓存、Codex 运行时二进制和个人文档均由 `.gitignore` 排除。
 
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
+## 验证
 
-## Learn More
+```powershell
+pnpm exec eslint app/ProjectWorkspace.tsx app/codex-client.ts app/codex-runtime.ts
+pnpm desktop:web:build
+cargo check --manifest-path src-tauri/Cargo.toml
+```
 
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+## 发布
+
+`0.2.7` 的变更说明见 [RELEASE_NOTES.md](RELEASE_NOTES.md)。
+
+本仓库当前未附带开源许可证；公开源码不等同于授予再分发或商业使用许可。

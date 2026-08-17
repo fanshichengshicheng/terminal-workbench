@@ -1,6 +1,7 @@
 {
-  "name": "site-creator-vinext-starter",
-  "version": "0.1.0",
+  "name": "terminal-workbench",
+  "version": "0.2.7",
+  "description": "A Windows project workbench with local Codex integration, canvas tools, plans, notes, and local launchers.",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
@@ -9,8 +10,13 @@
     "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext dev",
     "build": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
     "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
+    "desktop:web:dev": "vite --config vite.desktop.config.ts --host 127.0.0.1 --port 1420",
+    "desktop:web:build": "vite build --config vite.desktop.config.ts",
+    "desktop:prepare": "node scripts/prepare-codex-sidecar.mjs",
+    "desktop:dev": "tauri dev",
+    "desktop:build": "tauri build",
     "test": "npm run build && node --test tests/rendered-html.test.mjs",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern dist-desktop --ignore-pattern .next --ignore-pattern .vinext --ignore-pattern .wrangler --ignore-pattern src-tauri/target",
     "db:generate": "drizzle-kit generate",
     "codex:bridge": "node scripts/codex-bridge.mjs"
   },
@@ -29,6 +35,7 @@
     "@eslint/js": "9.39.4",
     "@next/eslint-plugin-next": "16.2.6",
     "@tailwindcss/postcss": "4.2.1",
+    "@tauri-apps/cli": "2.11.4",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",

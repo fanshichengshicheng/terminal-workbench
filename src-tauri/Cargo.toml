@@ -1,0 +1,21 @@
+[package]
+name = "terminal-workbench"
+version = "0.2.7"
+description = "Personal terminal workbench desktop application"
+authors = ["Workbench"]
+edition = "2021"
+
+[lib]
+name = "terminal_workbench_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri = { version = "2", features = [] }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Networking_WinHttp", "Win32_Security_Credentials", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging"] }

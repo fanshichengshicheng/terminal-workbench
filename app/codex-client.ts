@@ -40,8 +40,21 @@ type PendingRequest = {
   reject: (error: Error) => void;
 };
 
+type NativeCodexStatus = { generation: number };
+type NativeCodexMessage = { generation: number; message: string };
+type NativeCodexSignal = { generation: number };
+
+import { invoke } from "@tauri-apps/api/core";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { isDesktopApp } from "./desktop-ai";
+
 export class CodexClient extends EventTarget {
   private socket: WebSocket | null = null;
+  private native = false;
+  private unlisten: UnlistenFn | null = null;
+  private unlistenDisconnect: UnlistenFn | null = null;
+  private nativeGeneration: number | null = null;
+  private connecting: Promise<void> | null = null;
   private pending = new Map<number, PendingRequest>();
   private requestId = 1;
   readonly url: string;
@@ -52,7 +65,42 @@ export class CodexClient extends EventTarget {
   }
 
   async connect() {
-    if (this.socket?.readyState === WebSocket.OPEN) return;
+    if (this.native || this.socket?.readyState === WebSocket.OPEN) return;
+    if (this.connecting) return this.connecting;
+    this.connecting = this.connectInternal().finally(() => { this.connecting = null; });
+    return this.connecting;
+  }
+
+  private async connectInternal() {
+    if (isDesktopApp()) {
+      try {
+        const status = await invoke<NativeCodexStatus>("codex_start");
+        this.nativeGeneration = status.generation;
+        this.unlisten = await listen<NativeCodexMessage>("codex-message", event => {
+          if (event.payload.generation === this.nativeGeneration) this.receive(event.payload.message);
+        });
+        this.unlistenDisconnect = await listen<NativeCodexSignal>("codex-disconnected", event => {
+          if (event.payload.generation === this.nativeGeneration) this.handleDisconnect("Codex 本地进程已退出");
+        });
+        this.native = true;
+        await this.request("initialize", {
+          clientInfo: { name: "terminal-workbench", title: "终端工作台", version: "0.2.7" },
+          capabilities: { experimentalApi: true, requestAttestation: false },
+        });
+        this.notify("initialized");
+        this.dispatchEvent(new Event("connected"));
+        return;
+      } catch (error) {
+        this.native = false;
+        this.nativeGeneration = null;
+        this.unlisten?.();
+        this.unlistenDisconnect?.();
+        this.unlisten = null;
+        this.unlistenDisconnect = null;
+        await invoke("codex_stop").catch(() => {});
+        throw error;
+      }
+    }
     await new Promise<void>((resolve, reject) => {
       const socket = new WebSocket(this.url);
       const timeout = window.setTimeout(() => {
@@ -70,14 +118,12 @@ export class CodexClient extends EventTarget {
       };
       socket.onclose = () => {
         this.socket = null;
-        for (const request of this.pending.values()) request.reject(new Error("Codex 连接已断开"));
-        this.pending.clear();
-        this.dispatchEvent(new Event("disconnected"));
+        this.handleDisconnect("Codex 连接已断开");
       };
       socket.onmessage = event => this.receive(String(event.data));
     });
     await this.request("initialize", {
-      clientInfo: { name: "terminal-workbench", title: "终端工作台", version: "0.1.0" },
+      clientInfo: { name: "terminal-workbench", title: "终端工作台", version: "0.2.7" },
       capabilities: { experimentalApi: true, requestAttestation: false },
     });
     this.notify("initialized");
@@ -85,27 +131,66 @@ export class CodexClient extends EventTarget {
   }
 
   disconnect() {
+    if (this.native) {
+      this.native = false;
+      this.nativeGeneration = null;
+      this.unlisten?.();
+      this.unlistenDisconnect?.();
+      this.unlisten = null;
+      this.unlistenDisconnect = null;
+      invoke("codex_stop").catch(() => {});
+    }
     this.socket?.close();
     this.socket = null;
+    for (const request of this.pending.values()) request.reject(new Error("Codex 连接已断开"));
+    this.pending.clear();
+  }
+
+  async reconnect() {
+    const shouldStopNative = this.native || isDesktopApp();
+    this.native = false;
+    this.nativeGeneration = null;
+    this.unlisten?.();
+    this.unlistenDisconnect?.();
+    this.unlisten = null;
+    this.unlistenDisconnect = null;
+    this.socket?.close();
+    this.socket = null;
+    for (const request of this.pending.values()) request.reject(new Error("Codex 正在重新连接"));
+    this.pending.clear();
+    if (shouldStopNative) await invoke("codex_stop").catch(() => {});
+    await this.connect();
   }
 
   request<T>(method: string, params?: Record<string, unknown>): Promise<T> {
-    if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+    if (!this.native && (!this.socket || this.socket.readyState !== WebSocket.OPEN)) {
       return Promise.reject(new Error("Codex 尚未连接"));
     }
     const id = this.requestId++;
-    this.socket.send(JSON.stringify({ id, method, params }));
     return new Promise<T>((resolve, reject) => {
       this.pending.set(id, { resolve: value => resolve(value as T), reject });
+      this.sendRaw(JSON.stringify({ id, method, params })).catch(error => {
+        this.pending.delete(id);
+        reject(error);
+      });
     });
   }
 
   respond(id: number | string, result: unknown) {
-    if (this.socket?.readyState === WebSocket.OPEN) this.socket.send(JSON.stringify({ id, result }));
+    this.sendRaw(JSON.stringify({ id, result })).catch(() => {});
   }
 
   notify(method: string, params?: Record<string, unknown>) {
-    if (this.socket?.readyState === WebSocket.OPEN) this.socket.send(JSON.stringify({ method, params }));
+    this.sendRaw(JSON.stringify({ method, params })).catch(() => {});
+  }
+
+  private async sendRaw(raw: string) {
+    if (this.native) {
+      await invoke("codex_send", { message: raw });
+      return;
+    }
+    if (this.socket?.readyState !== WebSocket.OPEN) throw new Error("Codex 尚未连接");
+    this.socket.send(raw);
   }
 
   private receive(raw: string) {
@@ -126,5 +211,18 @@ export class CodexClient extends EventTarget {
       }
       if (message.method) this.dispatchEvent(new CustomEvent("notification", { detail: message }));
     }
+  }
+
+  private handleDisconnect(message: string) {
+    this.native = false;
+    this.nativeGeneration = null;
+    this.unlisten?.();
+    this.unlistenDisconnect?.();
+    this.unlisten = null;
+    this.unlistenDisconnect = null;
+    this.socket = null;
+    for (const request of this.pending.values()) request.reject(new Error(message));
+    this.pending.clear();
+    this.dispatchEvent(new Event("disconnected"));
   }
 }
