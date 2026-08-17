@@ -1,3 +1,7 @@
+<p align="right">
+  <strong>简体中文</strong> · <a href="README_EN.md">English</a>
+</p>
+
 # 终端工作台
 
 <p align="center">
