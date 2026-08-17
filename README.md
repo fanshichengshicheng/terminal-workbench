@@ -1,8 +1,43 @@
 # 终端工作台
 
+<p align="center">
+  <img src="public/brand-logo-preview.png" alt="终端工作台" width="240" />
+</p>
+
 终端工作台是一款面向 Windows 的本机项目工作区，将项目管理、创作笔记、今日计划、日历、本机工具启动器、可视化画布和 Codex 对话整合在同一个桌面应用中。
 
 当前版本：`0.2.7`
+
+## 设计说明
+
+本项目尝试参考并复现《明日方舟：终末地》的视觉设计语言，是一次非官方的个人风格化实践。最终呈现或许没有做到完全还原，但从配色、排版到交互细节都已经尽力打磨。
+
+本项目与鹰角网络及《明日方舟：终末地》官方无关。
+
+## 界面预览
+
+### 启动界面
+
+![终端工作台启动界面](docs/screenshots/workbench-overview.png)
+
+<table>
+  <tr>
+    <td width="50%">
+      <strong>今日计划</strong><br />
+      <img src="docs/screenshots/daily-plan.png" alt="今日计划" />
+    </td>
+    <td width="50%">
+      <strong>知识图谱画布</strong><br />
+      <img src="docs/screenshots/canvas.png" alt="知识图谱画布" />
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2">
+      <strong>月度日历</strong><br />
+      <img src="docs/screenshots/plans-calendar.png" alt="今日计划与日历" />
+    </td>
+  </tr>
+</table>
 
 ## 主要功能
 
