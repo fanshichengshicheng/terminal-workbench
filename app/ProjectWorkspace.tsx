@@ -13,6 +13,7 @@ import {
   Position,
   ReactFlow,
   ReactFlowProvider,
+  SelectionMode,
   addEdge,
   useEdgesState,
   useNodesState,
@@ -71,16 +72,28 @@ type CanvasNodeData = {
   editable?: boolean;
   strokes?: Array<{ path: string; color: string }>;
   stroke?: string;
+  groupColor?: string;
   update?: (id: string, patch: Partial<CanvasNodeData>) => void;
   remove?: (id: string) => void;
+  ungroup?: (id: string) => void;
 };
 
-type CanvasNode = Node<CanvasNodeData,"note"|"image"|"response"|"doodle">;
+type CanvasNode = Node<CanvasNodeData,"note"|"image"|"response"|"doodle"|"group">;
 type AssistantEntry = { id: string; role: "user"; text: string } | { id: string; role: "assistant"; text: string };
 type ThreadListResponse = { data: CodexThread[]; nextCursor?: string | null };
 type ThreadResponse = { thread: CodexThread; model?: string | null; reasoningEffort?: string | null };
 
 const normalizedDirectory = (value:string) => value.trim().replace(/[\\/]+$/, "").toLocaleLowerCase();
+const groupColors = ["#d5a900","#7a8580","#5e6d68"];
+const nodeWidth = (node:CanvasNode) => node.measured?.width ?? node.width ?? (typeof node.style?.width === "number" ? node.style.width : 260);
+const nodeHeight = (node:CanvasNode) => node.measured?.height ?? node.height ?? (typeof node.style?.height === "number" ? node.style.height : 180);
+const absoluteNodePosition = (node:CanvasNode,nodes:CanvasNode[]) => {
+  const lookup=new Map(nodes.map(item=>[item.id,item]));
+  let current=node,position={...node.position},guard=0;
+  while(current.parentId&&guard<20){const parent=lookup.get(current.parentId);if(!parent)break;position={x:position.x+parent.position.x,y:position.y+parent.position.y};current=parent;guard+=1}
+  return position;
+};
+const sortCanvasNodes = (items:CanvasNode[]) => [...items.filter(node=>node.type==="group"),...items.filter(node=>node.type!=="group")];
 
 const activityLabel = (status:CodexActivityStatus,count:number) => status==="running"?`正在执行 ${count} 项操作`:status==="failed"?`${count} 项操作出现失败`:`已完成 ${count} 项操作`;
 
@@ -91,10 +104,20 @@ function ChatActivity({entry,showAll}:{entry:Extract<CodexChatEntry,{role:"activ
   </details>;
 }
 
+function EditableTitle({id,data}:{id:string;data:CanvasNodeData}) {
+  const[editing,setEditing]=useState(false),[draft,setDraft]=useState(data.title||"");
+  const begin=()=>{setDraft(data.title||"");setEditing(true)};
+  const commit=()=>{const next=draft.trim();if(next&&next!==data.title)data.update?.(id,{title:next});setEditing(false)};
+  return <div className="project-node-title-wrap">
+    {editing?<input className="project-node-title-input nodrag" value={draft} onChange={event=>setDraft(event.target.value)} onBlur={commit} onKeyDown={event=>{if(event.key==="Enter"){event.preventDefault();commit()}if(event.key==="Escape"){event.preventDefault();setEditing(false);setDraft(data.title||"")}}}/>:<span>{data.title||"未命名卡片"}</span>}
+    <button className="project-node-rename nodrag" onClick={begin} aria-label="重命名画布卡片" title="重命名"><PencilLine size={12}/></button>
+  </div>;
+}
+
 function NodeShell({id,selected,data,children}:{id:string;selected:boolean;data:CanvasNodeData;children:React.ReactNode}) {
   return <article className={`project-canvas-node ${selected?"selected":""}`}>
     <NodeResizer isVisible={selected} minWidth={180} minHeight={110}/>
-    <header><span>{data.title}</span><button onClick={()=>data.remove?.(id)} aria-label="删除画布卡片"><X size={14}/></button></header>
+    <header><EditableTitle id={id} data={data}/><button className="nodrag" onClick={()=>data.remove?.(id)} aria-label="删除画布卡片"><X size={14}/></button></header>
     {children}
     <Handle type="target" position={Position.Left}/><Handle type="source" position={Position.Right}/>
   </article>;
@@ -135,7 +158,19 @@ function DoodleNode({id,selected,data}:NodeProps<CanvasNode>) {
   </div></NodeShell>;
 }
 
-const nodeTypes = { note: NoteNode, image: ImageNode, response: ResponseNode, doodle: DoodleNode };
+function GroupNode({id,selected,data}:NodeProps<CanvasNode>) {
+  const color=data.groupColor||"#d5a900";
+  return <article className={`project-canvas-group ${selected?"selected":""}`} style={{borderColor:color}}>
+    <NodeResizer isVisible={selected} minWidth={300} minHeight={150}/>
+    <header className="project-group-header" style={{borderBottomColor:color}}>
+      <EditableTitle id={id} data={data}/>
+      <button className="nodrag" onClick={()=>data.ungroup?.(id)} aria-label="解除编组" title="解除编组"><X size={14}/></button>
+    </header>
+    <div className="project-group-body"><span>GROUP FRAME</span><small>移动框架可带动内部卡片</small></div>
+  </article>;
+}
+
+const nodeTypes = { note: NoteNode, image: ImageNode, response: ResponseNode, doodle: DoodleNode, group: GroupNode };
 
 function ProjectWorkspaceInner({project,close}:{project:ProjectWorkspaceProject;close:()=>void}) {
   const saveTimer=useRef<number|null>(null),latestState=useRef<ProjectWorkspaceState|null>(null),imagePicker=useRef<HTMLInputElement>(null),chatImagePicker=useRef<HTMLInputElement>(null),activeThreadIdRef=useRef<string|null>(null),threadSyncRef=useRef(0);
@@ -150,10 +185,26 @@ function ProjectWorkspaceInner({project,close}:{project:ProjectWorkspaceProject;
   const[directoryPicking,setDirectoryPicking]=useState(false),[connectMode,setConnectMode]=useState(false),[connectSource,setConnectSource]=useState<string|null>(null);
   const[nodes,setNodes,onNodesChange]=useNodesState<CanvasNode>([]),[edges,setEdges,onEdgesChange]=useEdgesState<Edge>([]);
   const flow=useReactFlow<CanvasNode,Edge>();
+  const nodesRef=useRef<CanvasNode[]>([]);
+  useEffect(()=>{nodesRef.current=nodes},[nodes]);
+  const selectedNodes=nodes.filter(node=>node.selected);
+  const selectedGroups=selectedNodes.filter(node=>node.type==="group");
+  const groupableSelection=selectedNodes.filter(node=>node.type!=="group"&&!node.parentId);
+  const ungroupIds=selectedGroups.length?selectedGroups.map(node=>node.id):Array.from(new Set(selectedNodes.map(node=>node.parentId).filter((id):id is string=>Boolean(id))));
 
-  const removeNode=useCallback((id:string)=>{setNodes(current=>current.filter(node=>node.id!==id));setEdges(current=>current.filter(edge=>edge.source!==id&&edge.target!==id))},[setEdges,setNodes]);
+  const removeNode=useCallback((id:string)=>{
+    const descendants=new Set([id]);
+    let changed=true;
+    while(changed){changed=false;for(const node of nodesRef.current)if(node.parentId&&descendants.has(node.parentId)&&!descendants.has(node.id)){descendants.add(node.id);changed=true}}
+    setNodes(current=>current.filter(node=>!descendants.has(node.id)));
+    setEdges(current=>current.filter(edge=>!descendants.has(edge.source)&&!descendants.has(edge.target)));
+  },[setEdges,setNodes]);
   const updateNode=useCallback((id:string,patch:Partial<CanvasNodeData>)=>setNodes(current=>current.map(node=>node.id===id?{...node,data:{...node.data,...patch}}:node)),[setNodes]);
-  const hydrateNode=useCallback((node:CanvasNode):CanvasNode=>({...node,data:{...node.data,update:updateNode,remove:removeNode}}),[removeNode,updateNode]);
+  const ungroupNode=useCallback((groupId:string)=>setNodes(current=>sortCanvasNodes(current.filter(node=>node.id!==groupId).map(node=>{
+    if(node.parentId!==groupId)return node;
+    return {...node,position:absoluteNodePosition(node,current),parentId:undefined,extent:undefined,zIndex:undefined};
+  }))),[setNodes]);
+  const hydrateNode=useCallback((node:CanvasNode):CanvasNode=>({...node,data:{...node.data,update:updateNode,remove:removeNode,ungroup:ungroupNode}}),[removeNode,ungroupNode,updateNode]);
   const usingCodex=aiSettings.provider==="codex",selectedProvider=providerInfo(aiSettings.provider);
   const client:CodexClient=codexRuntime.client,connection=runtimeSnapshot.connection;
   const activeThread=threads.find(thread=>thread.id===activeThreadId),activeTurnId=usingCodex&&activeThreadId?runtimeSnapshot.activeTurns[activeThreadId]||null:null;
@@ -196,8 +247,8 @@ function ProjectWorkspaceInner({project,close}:{project:ProjectWorkspaceProject;
     setThreadsSynced(true);
   },[client,project.id,project.title,projectDirectory,resumeCodexThread]);
 
-  useEffect(()=>{let cancelled=false;loadProjectWorkspace(project.id).then(saved=>{if(cancelled)return;if(saved){setProjectDirectory(saved.projectDirectory||"");setThreads(saved.threads||[]);setActiveThreadId(saved.activeThreadId||saved.threads?.[0]?.id||null);setAssistantChats(saved.assistantChats||{});setNodes((saved.nodes||[]).map(node=>hydrateNode(node as CanvasNode)));setEdges(saved.edges||[])}setReady(true)}).catch(()=>setReady(true));return()=>{cancelled=true}},[hydrateNode,project.id,setEdges,setNodes]);
-  useEffect(()=>{if(!ready)return;const state:ProjectWorkspaceState={projectDirectory,threads,activeThreadId,assistantChats,nodes:nodes.map(node=>({...node,data:{...node.data,update:undefined,remove:undefined}})),edges};latestState.current=state;if(saveTimer.current)window.clearTimeout(saveTimer.current);saveTimer.current=window.setTimeout(()=>saveProjectWorkspace(project.id,state).catch(()=>{}),300);return()=>{if(saveTimer.current)window.clearTimeout(saveTimer.current)}},[activeThreadId,assistantChats,edges,nodes,project.id,projectDirectory,ready,threads]);
+  useEffect(()=>{let cancelled=false;loadProjectWorkspace(project.id).then(saved=>{if(cancelled)return;if(saved){setProjectDirectory(saved.projectDirectory||"");setThreads(saved.threads||[]);setActiveThreadId(saved.activeThreadId||saved.threads?.[0]?.id||null);setAssistantChats(saved.assistantChats||{});setNodes(sortCanvasNodes((saved.nodes||[]).map(node=>hydrateNode(node as CanvasNode))));setEdges(saved.edges||[])}setReady(true)}).catch(()=>setReady(true));return()=>{cancelled=true}},[hydrateNode,project.id,setEdges,setNodes]);
+  useEffect(()=>{if(!ready)return;const state:ProjectWorkspaceState={projectDirectory,threads,activeThreadId,assistantChats,nodes:sortCanvasNodes(nodes.map(node=>({...node,data:{...node.data,update:undefined,remove:undefined,ungroup:undefined}}))),edges};latestState.current=state;if(saveTimer.current)window.clearTimeout(saveTimer.current);saveTimer.current=window.setTimeout(()=>saveProjectWorkspace(project.id,state).catch(()=>{}),300);return()=>{if(saveTimer.current)window.clearTimeout(saveTimer.current)}},[activeThreadId,assistantChats,edges,nodes,project.id,projectDirectory,ready,threads]);
   useEffect(()=>()=>{if(saveTimer.current)window.clearTimeout(saveTimer.current);if(latestState.current)saveProjectWorkspace(project.id,latestState.current).catch(()=>{})},[project.id]);
 
   useEffect(()=>{const onNotification=(event:Event)=>{const message=(event as CustomEvent<{method:string;params:Record<string,unknown>}>).detail,params=message.params||{},threadId=String(params.threadId||"");if(message.method==="turn/completed"&&threadId)setThreads(current=>current.map(thread=>thread.id===threadId?{...thread,updatedAt:Date.now()}:thread));if(message.method==="thread/name/updated"){const name=String(params.name||"");setThreads(current=>current.map(thread=>thread.id===threadId?{...thread,name}:thread))}};client.addEventListener("notification",onNotification);return()=>client.removeEventListener("notification",onNotification)},[client]);
@@ -230,11 +281,38 @@ function ProjectWorkspaceInner({project,close}:{project:ProjectWorkspaceProject;
   const onConnect=useCallback((connectionData:Connection)=>setEdges(current=>addEdge({...connectionData,id:`edge-${Date.now()}`,type:"smoothstep"},current)),[setEdges]);
   const connectNode=useCallback((_event:React.MouseEvent,node:CanvasNode)=>{if(!connectMode)return;if(!connectSource){setConnectSource(node.id);return}if(connectSource===node.id){setConnectSource(null);return}setEdges(current=>addEdge({id:`edge-${Date.now()}`,source:connectSource,target:node.id,type:"smoothstep"},current));setConnectSource(null)},[connectMode,connectSource,setEdges]);
   const toggleConnectMode=()=>{setConnectMode(value=>!value);setConnectSource(null)};
+  const renameSelected=()=>{const node=selectedNodes[0];if(!node)return;const next=window.prompt("重命名画布卡片",node.data.title||"")?.trim();if(next)updateNode(node.id,{title:next})};
+  const clearSelection=()=>setNodes(current=>current.map(node=>node.selected?{...node,selected:false}:node));
+  const deleteSelection=()=>{
+    const ids=new Set(selectedNodes.map(node=>node.id));
+    let changed=true;
+    while(changed){changed=false;for(const node of nodesRef.current)if(node.parentId&&ids.has(node.parentId)&&!ids.has(node.id)){ids.add(node.id);changed=true}}
+    setNodes(current=>current.filter(node=>!ids.has(node.id)));
+    setEdges(current=>current.filter(edge=>!ids.has(edge.source)&&!ids.has(edge.target)));
+  };
+  const createGroup=()=>{
+    if(groupableSelection.length<2)return;
+    const positions=groupableSelection.map(node=>({node,position:absoluteNodePosition(node,nodes)}));
+    const left=Math.min(...positions.map(item=>item.position.x)),top=Math.min(...positions.map(item=>item.position.y)),right=Math.max(...positions.map(item=>item.position.x+nodeWidth(item.node))),bottom=Math.max(...positions.map(item=>item.position.y+nodeHeight(item.node)));
+    const fallback={x:left,y:top,width:right-left,height:bottom-top},measured=flow.getNodesBounds(groupableSelection),bounds=measured.width>0&&measured.height>0?measured:fallback;
+    const groupX=bounds.x-28,groupY=bounds.y-54,groupId=`group-${nodes.length+1}-${groupableSelection.map(node=>node.id).join("-")}`,groupWidth=Math.max(320,bounds.width+56),groupHeight=Math.max(164,bounds.height+78),selectedIds=new Set(groupableSelection.map(node=>node.id));
+    const group=hydrateNode({id:groupId,type:"group",position:{x:groupX,y:groupY},data:{title:"新编组",groupColor:groupColors[0]},style:{width:groupWidth,height:groupHeight},draggable:true,selectable:true,connectable:false,deletable:true,dragHandle:".project-group-header",zIndex:0});
+    setNodes(current=>sortCanvasNodes([group,...current.map(node=>selectedIds.has(node.id)?{...node,parentId:groupId,extent:"parent" as const,position:{x:absoluteNodePosition(node,nodes).x-groupX,y:absoluteNodePosition(node,nodes).y-groupY},zIndex:1}:node)]));
+  };
+  const ungroupSelection=()=>{
+    if(!ungroupIds.length)return;
+    const targets=new Set(ungroupIds);
+    setNodes(current=>sortCanvasNodes(current.filter(node=>!targets.has(node.id)).map(node=>{
+      if(!node.parentId||!targets.has(node.parentId))return node;
+      return {...node,position:absoluteNodePosition(node,current),parentId:undefined,extent:undefined,zIndex:undefined};
+    })));
+  };
+  const setSelectedGroupColor=(color:string)=>selectedGroups.forEach(node=>updateNode(node.id,{groupColor:color}));
 
   return <main className={`project-workspace ${leftOpen?"left-open":"left-closed"} ${rightOpen?"right-open":"right-closed"}`}>
     <header className="project-workspace-head"><button onClick={close} className="project-back">← 项目列表</button><div><small>{project.id} / PROJECT WORKSPACE</small><h1>{project.title}</h1></div><div className="project-directory"><FolderOpen size={15}/><input value={projectDirectory} onChange={event=>setProjectDirectory(event.target.value)} placeholder="设置本机项目目录，例如 G:\\Git_project\\..."/><button onClick={pickProjectDirectory} disabled={directoryPicking} title="选择本机项目目录"><FolderOpen size={16}/></button></div><div className="project-ai-status">{usingCodex&&activeThread&&<span className="codex-model-chip">{modelSummary}</span>}<span className={`codex-connection ${connection}`}><i/>{connection==="online"?"CODEX ONLINE":connection==="connecting"?"CONNECTING":"CODEX OFFLINE"}</span><button onClick={()=>setSettingsOpen(true)} title="AI 服务设置"><Settings2 size={16}/></button></div></header>
     <aside className="project-thread-rail"><header><button onClick={()=>setLeftOpen(value=>!value)} title={leftOpen?"收起对话栏":"展开对话栏"}><PanelLeftClose size={17}/></button>{leftOpen&&<><b>项目对话</b><button onClick={createThread} title="新建 Codex 对话"><MessageSquarePlus size={17}/></button></>}</header>{leftOpen&&<div className="project-thread-list">{threads.map(thread=><article key={thread.id} className={thread.id===activeThreadId?"active":""}><button className="thread-main" onClick={()=>openThread(thread.id)}><span><Bot size={14}/></span><b>{thread.name}</b><p>{thread.preview||"等待对话"}</p><time>{new Date(thread.updatedAt).toLocaleString("zh-CN",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"})}</time></button><div><button onClick={()=>renameThread(thread.id)} title="重命名对话"><PencilLine size={13}/></button><button onClick={()=>forkThread(thread.id)} title="分叉对话"><GitFork size={13}/></button><button onClick={()=>archiveThread(thread.id)} title="归档对话"><Archive size={13}/></button></div></article>)}{!threads.length&&<div className="thread-empty"><Bot size={24}/><p>设置项目目录后，即可创建多个独立 Codex 对话。</p><button onClick={createThread}><Plus size={14}/>新建对话</button></div>}</div>}</aside>
-    <section className="project-canvas"><header><div><button onClick={addNote} title="添加文字卡片"><StickyNote size={16}/>文字</button><button onClick={()=>imagePicker.current?.click()} title="添加图片"><ImagePlus size={16}/>图片</button><button onClick={addDoodle} title="添加自由涂鸦"><Brush size={16}/>涂鸦</button><button className={connectMode?"active":""} onClick={toggleConnectMode} title={connectMode?"退出连线模式":"进入连线模式；依次点击两个卡片"}><Waypoints size={16}/>连线</button><input ref={imagePicker} type="file" accept="image/*" hidden onChange={pickImage}/></div><span>{connectMode?(connectSource?"LINE / 选择终点":"LINE / 选择起点"):`CANVAS / ${nodes.length} ITEMS · 可直接拖入图片`}</span><button onClick={()=>setRightOpen(value=>!value)} title={rightOpen?"收起 AI 面板":"展开 AI 面板"}><PanelRightClose size={17}/></button></header><div className={`project-flow ${connectMode?"connecting":""}`} onDragOver={event=>{event.preventDefault();event.dataTransfer.dropEffect="copy"}} onDrop={dropImage}><ReactFlow nodes={nodes.map(node=>connectSource===node.id?{...node,className:"connect-source"}:node)} edges={edges} nodeTypes={nodeTypes} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} onNodeClick={connectNode} onPaneClick={()=>setConnectSource(null)} connectionMode={ConnectionMode.Loose} defaultEdgeOptions={{type:"smoothstep",style:{stroke:"#171918",strokeWidth:2}}} connectionLineStyle={{stroke:"#f2d600",strokeWidth:2}} snapToGrid snapGrid={[12,12]} fitView minZoom={.15} maxZoom={2}><Background variant={BackgroundVariant.Dots} gap={24} size={1}/><MiniMap pannable zoomable/><Controls showInteractive={false}/></ReactFlow></div></section>
+    <section className="project-canvas"><header><div><button onClick={addNote} title="添加文字卡片"><StickyNote size={16}/>文字</button><button onClick={()=>imagePicker.current?.click()} title="添加图片"><ImagePlus size={16}/>图片</button><button onClick={addDoodle} title="添加自由涂鸦"><Brush size={16}/>涂鸦</button><button className={connectMode?"active":""} onClick={toggleConnectMode} title={connectMode?"退出连线模式":"进入连线模式；依次点击两个卡片"}><Waypoints size={16}/>连线</button><input ref={imagePicker} type="file" accept="image/*" hidden onChange={pickImage}/></div><span>{connectMode?(connectSource?"LINE / 选择终点":"LINE / 选择起点"):`CANVAS / ${nodes.length} ITEMS · 可直接拖入图片`}</span><button onClick={()=>setRightOpen(value=>!value)} title={rightOpen?"收起 AI 面板":"展开 AI 面板"}><PanelRightClose size={17}/></button></header>{selectedNodes.length>0&&<div className="project-selection-toolbar nodrag nopan"><b>已选 {selectedNodes.length} 项</b>{selectedNodes.length===1&&<button onClick={renameSelected} title="重命名"><PencilLine size={13}/>重命名</button>}{groupableSelection.length>=2&&<button onClick={createGroup} title="将选中的卡片编组"><GitFork size={13}/>编组</button>}{ungroupIds.length>0&&<button onClick={ungroupSelection} title="解除编组"><Waypoints size={13}/>解除编组</button>}{selectedGroups.length>0&&<div className="project-group-colors" aria-label="编组颜色">{groupColors.map(color=><button key={color} className="project-group-color" style={{background:color}} onClick={()=>setSelectedGroupColor(color)} aria-label={`设置编组颜色 ${color}`} />)}</div>}<button onClick={deleteSelection} title="删除选中项"><Trash2 size={13}/>删除</button><button onClick={clearSelection} title="清除选择"><X size={13}/></button></div>}<div className={`project-flow ${connectMode?"connecting":""}`} onDragOver={event=>{event.preventDefault();event.dataTransfer.dropEffect="copy"}} onDrop={dropImage}><ReactFlow nodes={nodes.map(node=>connectSource===node.id?{...node,className:"connect-source"}:node)} edges={edges} nodeTypes={nodeTypes} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} onNodeClick={connectNode} onPaneClick={()=>setConnectSource(null)} selectionOnDrag selectionKeyCode={["Shift","Meta"]} multiSelectionKeyCode={["Control","Shift","Meta"]} selectionMode={SelectionMode.Partial} panOnDrag={[1,2]} connectionMode={ConnectionMode.Loose} defaultEdgeOptions={{type:"smoothstep",style:{stroke:"#171918",strokeWidth:2}}} connectionLineStyle={{stroke:"#f2d600",strokeWidth:2}} snapToGrid snapGrid={[12,12]} fitView minZoom={.15} maxZoom={2}><Background variant={BackgroundVariant.Dots} gap={24} size={1}/><MiniMap pannable zoomable/><Controls showInteractive={false}/></ReactFlow></div></section>
     <aside className="project-codex-panel">{rightOpen&&<>
       <header><div><small>{usingCodex?modelSummary:"TEXT ASSISTANT"}</small><b>{usingCodex?activeThread?.name||"未选择对话":`${selectedProvider.label} / ${aiSettings.model}`}</b></div>{usingCodex&&<button className="operation-visibility" onClick={()=>setShowAllOperations(value=>!value)} title={showAllOperations?"精简操作记录":"显示全部操作"}><ListFilter size={14}/><span>{showAllOperations?"精简":"显示全部操作"}</span></button>}{usingCodex&&activeThread&&<button onClick={()=>renameThread(activeThread.id)} title="重命名当前对话"><PencilLine size={16}/></button>}<button onClick={()=>setSettingsOpen(true)} title="AI 服务设置"><Settings2 size={16}/></button></header>
       {visibleConnectionError&&<div className="codex-error"><b>{usingCodex?"CODEX CONNECTION":`${selectedProvider.label.toUpperCase()} CONNECTION`}</b><p>{visibleConnectionError}</p><div>{usingCodex?<><code>内置进程 / 网页桥接</code><button onClick={retryCodex}>重新连接</button></>:<button onClick={()=>setSettingsOpen(true)}>检查设置</button>}</div></div>}

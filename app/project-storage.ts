@@ -7,11 +7,16 @@ export type StoredProjectThread = {
 
 export type StoredCanvasNode = {
   id: string;
-  type: "note" | "image" | "response" | "doodle";
+  type: "note" | "image" | "response" | "doodle" | "group";
   position: { x: number; y: number };
   data: Record<string, unknown>;
   width?: number;
   height?: number;
+  parentId?: string;
+  extent?: unknown;
+  zIndex?: number;
+  style?: unknown;
+  [key: string]: unknown;
 };
 
 export type StoredCanvasEdge = {

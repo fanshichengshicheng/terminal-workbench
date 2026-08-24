@@ -245,3 +245,26 @@ test("ships the Qixun sprite-v2 dorm with a Spine import fallback", async () => 
   await access(new URL("public/pets/spineboy/spineboy.atlas", templateRoot));
   await access(new URL("public/pets/spineboy/spineboy.png", templateRoot));
 });
+
+test("ships a persistent canvas with rename, selection, and movable groups", async () => {
+  const [workspace, css] = await Promise.all([
+    readFile(new URL("../app/ProjectWorkspace.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/project-workspace.css", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(workspace, /type CanvasNode = Node<CanvasNodeData,[^;]*"group"/);
+  assert.match(workspace, /function EditableTitle/);
+  assert.match(workspace, /aria-label="重命名画布卡片"/);
+  assert.match(workspace, /selectionOnDrag/);
+  assert.match(workspace, /selectionKeyCode=\{\["Shift","Meta"\]\}/);
+  assert.match(workspace, /multiSelectionKeyCode=\{\["Control","Shift","Meta"\]\}/);
+  assert.match(workspace, /function GroupNode/);
+  assert.match(workspace, /parentId:groupId/);
+  assert.match(workspace, /extent:"parent"/);
+  assert.match(workspace, /const createGroup/);
+  assert.match(workspace, /const ungroupSelection/);
+  assert.match(workspace, /project-selection-toolbar/);
+  assert.match(css, /\.project-canvas-group/);
+  assert.match(css, /\.project-group-color/);
+  assert.match(css, /\.project-node-title-input/);
+});
