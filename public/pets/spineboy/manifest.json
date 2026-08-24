@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "official-spineboy-demo",
+  "name": "Spineboy",
+  "role": "宿舍适配测试员",
+  "spineVersion": "4.2.22",
+  "modelType": "spine-json",
+  "skeleton": "spineboy-pro.json",
+  "atlas": "spineboy.atlas",
+  "license": "LICENSE.txt",
+  "source": "https://github.com/EsotericSoftware/spine-runtimes/tree/4.2/examples/spineboy",
+  "animations": {
+    "idle": "idle",
+    "walk": "walk",
+    "run": "run",
+    "interact": "idle-turn",
+    "jump": "jump",
+    "work": "aim",
+    "showcase": "hoverboard",
+    "fail": "death"
+  }
+}

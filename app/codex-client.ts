@@ -84,7 +84,7 @@ export class CodexClient extends EventTarget {
         });
         this.native = true;
         await this.request("initialize", {
-          clientInfo: { name: "terminal-workbench", title: "终端工作台", version: "0.2.7" },
+          clientInfo: { name: "terminal-workbench", title: "终端工作台", version: "0.2.8" },
           capabilities: { experimentalApi: true, requestAttestation: false },
         });
         this.notify("initialized");
@@ -123,7 +123,7 @@ export class CodexClient extends EventTarget {
       socket.onmessage = event => this.receive(String(event.data));
     });
     await this.request("initialize", {
-      clientInfo: { name: "terminal-workbench", title: "终端工作台", version: "0.2.7" },
+      clientInfo: { name: "terminal-workbench", title: "终端工作台", version: "0.2.8" },
       capabilities: { experimentalApi: true, requestAttestation: false },
     });
     this.notify("initialized");

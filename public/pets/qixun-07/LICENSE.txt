@@ -1,0 +1,7 @@
+栖巡-07 / Qixun-07
+
+Original AI-assisted character asset created specifically for this personal workbench.
+No third-party game character artwork, logo, model, skeleton, texture, or voice asset is included.
+
+Copyright (c) 2026 workspace owner. Personal use and modification are permitted.
+Redistribution or commercial reuse requires the workspace owner's permission.

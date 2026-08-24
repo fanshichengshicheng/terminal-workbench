@@ -10,14 +10,14 @@
 
 Terminal Workbench is a local Windows project workspace inspired by the visual language of *Arknights: Endfield*. Its signature Memory Bubbles let ideas drift, connect, age, and turn into projects, while Codex conversations, background tasks, project canvases, daily planning, calendars, and local tools live together in one desktop application.
 
-Current version: `0.2.7`
+Current version: `0.2.8`
 
 Maintainer: [@fanshichengshicheng](https://github.com/fanshichengshicheng)
 
 ## Download
 
 <p align="center">
-  <a href="https://github.com/fanshichengshicheng/terminal-workbench/releases/download/v0.2.7/terminal-workbench_0.2.7_x64-setup.exe"><strong>Download the Windows x64 installer (v0.2.7)</strong></a>
+  <a href="https://github.com/fanshichengshicheng/terminal-workbench/releases/download/v0.2.8/terminal-workbench_0.2.8_x64-setup.exe"><strong>Download the Windows x64 installer (v0.2.8)</strong></a>
   <br />
   <a href="https://github.com/fanshichengshicheng/terminal-workbench/releases/latest">View the latest release and release notes</a>
 </p>
@@ -75,6 +75,10 @@ This project is not affiliated with Hypergryph or the official *Arknights: Endfi
 - A creative knowledge base, local and global relationship graphs, daily plans, and calendar synchronization
 - Quick launching for Windows applications, shortcuts, scripts, URLs, and folders
 - API keys stored in Windows Credential Manager instead of project files
+- A section-aware engineering overview with general milestones that sync with the calendar
+- An AI companion launcher with isolated project tasks, persona chat, and PET mode
+- A Qixun-07 dorm prototype with sprite-v2 animations, feeding, interaction, and patrol
+- One-click export and guarded restore for local workbench, project canvas, and planning data
 
 ## Requirements
 
@@ -127,6 +131,6 @@ cargo check --manifest-path src-tauri/Cargo.toml
 
 ## Release
 
-See [RELEASE_NOTES.md](RELEASE_NOTES.md) for the `0.2.7` release notes.
+See [RELEASE_NOTES.md](RELEASE_NOTES.md) for the `0.2.8` release notes.
 
 This repository currently does not include an open-source license. Public source availability does not grant permission for redistribution or commercial use.

@@ -10,14 +10,14 @@
 
 终端工作台是一款受《明日方舟：终末地》视觉语言启发的 Windows 本机项目工作区。它以可漫游、关联、衰减并转化为项目的「忆泡」组织灵感，同时将 Codex 对话、后台任务、项目画布、今日计划、日历和本机工具整合在同一个桌面应用中。
 
-当前版本：`0.2.7`
+当前版本：`0.2.8`
 
 维护者：[@fanshichengshicheng](https://github.com/fanshichengshicheng)
 
 ## 下载安装
 
 <p align="center">
-  <a href="https://github.com/fanshichengshicheng/terminal-workbench/releases/download/v0.2.7/terminal-workbench_0.2.7_x64-setup.exe"><strong>下载 Windows x64 安装包（v0.2.7）</strong></a>
+  <a href="https://github.com/fanshichengshicheng/terminal-workbench/releases/download/v0.2.8/terminal-workbench_0.2.8_x64-setup.exe"><strong>下载 Windows x64 安装包（v0.2.8）</strong></a>
   <br />
   <a href="https://github.com/fanshichengshicheng/terminal-workbench/releases/latest">查看最新版本与更新说明</a>
 </p>
@@ -75,6 +75,10 @@
 - 创作知识库、局部与全局关系图谱、今日计划与月历同步
 - Windows 应用、快捷方式、脚本、网址和文件夹快捷启动
 - API Key 使用 Windows Credential Manager 保存，不写入项目文件
+- 工程总览、通用里程碑与日历联动，支持比赛、考试、旅行等任意事件
+- AI 伴生悬浮窗：项目任务、隔离人格聊天与 PET 宠物模式
+- 宠物宿舍与栖巡-07 动作图集，支持投喂、互动、巡逻和位置移动
+- 一键导出/恢复本地工作台、项目画布和计划数据（不包含账户密钥）
 
 ## 系统要求
 

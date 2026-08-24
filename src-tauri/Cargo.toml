@@ -1,6 +1,6 @@
 [package]
 name = "terminal-workbench"
-version = "0.2.7"
+version = "0.2.8"
 description = "Personal terminal workbench desktop application"
 authors = ["Workbench"]
 edition = "2021"

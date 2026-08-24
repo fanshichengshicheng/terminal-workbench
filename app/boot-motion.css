@@ -1,0 +1,73 @@
+/* Final boot direction: B / Topographic Scan. */
+.boot-motion-fx {
+  position:absolute;
+  z-index:8;
+  inset:0;
+  overflow:hidden;
+  pointer-events:none;
+}
+.boot-motion-fx::before {
+  content:"";
+  position:absolute;
+  left:0;
+  top:0;
+  width:100%;
+  height:2px;
+  opacity:0;
+  background:var(--fy);
+  box-shadow:0 0 18px rgba(255,244,79,.72),0 12px 42px rgba(255,255,255,.16);
+}
+.boot-motion-scan.ready .boot-motion-fx::before {
+  animation:boot-scan-line 1.1s cubic-bezier(.2,.8,.2,1) both;
+}
+.boot-motion-fx>i {
+  position:absolute;
+  left:50%;
+  top:50%;
+  display:block;
+  aspect-ratio:1;
+  opacity:0;
+  border:1px solid rgba(255,244,79,.46);
+  border-radius:50%;
+  transform:translate(-50%,-50%) scale(.72);
+  pointer-events:none;
+}
+.boot-motion-fx>i:nth-child(1) { width:min(48vw,660px); }
+.boot-motion-fx>i:nth-child(2) { width:min(32vw,430px); border-style:dashed; }
+.boot-motion-scan.ready .boot-motion-fx>i:nth-child(1) { animation:boot-scan-ring 720ms 80ms ease-out both; }
+.boot-motion-scan.ready .boot-motion-fx>i:nth-child(2) { animation:boot-scan-ring 620ms 180ms ease-out both; }
+.boot-motion-scan.ready .boot-topo-map {
+  animation:boot-topo-in 800ms ease-out both;
+}
+.boot.boot-motion-scan.leaving .boot-entry-flash {
+  animation:boot-scan-exit 1.05s 150ms cubic-bezier(.65,0,.35,1) both;
+}
+
+@keyframes boot-scan-line {
+  0% { top:0; opacity:0; }
+  10%,80% { opacity:1; }
+  100% { top:100%; opacity:0; }
+}
+@keyframes boot-scan-ring {
+  from { opacity:0; transform:translate(-50%,-50%) scale(.72); }
+  55% { opacity:.8; }
+  to { opacity:0; transform:translate(-50%,-50%) scale(1.12); }
+}
+@keyframes boot-topo-in {
+  from { opacity:.08; filter:blur(7px); }
+  to { opacity:1; filter:blur(0); }
+}
+@keyframes boot-scan-exit {
+  0% { opacity:0; clip-path:inset(49.5% 0 49.5%); }
+  10% { opacity:1; }
+  72%,100% { opacity:1; clip-path:inset(0); }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .boot-motion-fx,
+  .boot-motion-scan.ready .boot-topo-map,
+  .boot.boot-motion-scan.leaving .boot-entry-flash {
+    animation:none!important;
+  }
+  .boot-motion-fx { display:none; }
+}

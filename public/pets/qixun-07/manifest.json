@@ -1,0 +1,34 @@
+{
+  "id": "qixun-07",
+  "name": "栖巡-07",
+  "role": "工业宿舍工程伴生体 / 机械渡鸦侦察单元",
+  "renderer": "sprite-v2",
+  "spriteVersionNumber": 2,
+  "spritesheet": "spritesheet.webp",
+  "license": "LICENSE.txt",
+  "source": "Original asset created for this workbench",
+  "cellWidth": 192,
+  "cellHeight": 208,
+  "columns": 8,
+  "rows": 11,
+  "animations": {
+    "idle": "idle",
+    "walk": "walk",
+    "interact": "interact",
+    "jump": "jump",
+    "showcase": "showcase",
+    "failed": "failed",
+    "waiting": "waiting",
+    "work": "work"
+  },
+  "states": {
+    "idle": { "row": 0, "frames": 6, "fps": 6 },
+    "walk": { "rightRow": 1, "leftRow": 2, "frames": 8, "fps": 10 },
+    "interact": { "row": 3, "frames": 4, "fps": 7 },
+    "jump": { "row": 4, "frames": 5, "fps": 8 },
+    "failed": { "row": 5, "frames": 8, "fps": 7 },
+    "waiting": { "row": 6, "frames": 6, "fps": 6 },
+    "work": { "row": 7, "frames": 6, "fps": 8 },
+    "showcase": { "row": 8, "frames": 6, "fps": 7 }
+  }
+}

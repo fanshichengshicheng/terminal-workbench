@@ -2,7 +2,7 @@
 
 /* eslint-disable react-hooks/set-state-in-effect, jsx-a11y/no-static-element-interactions */
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, ExternalLink, KeyRound, LoaderCircle, LogIn, LogOut, Trash2, X } from "lucide-react";
 import { AI_PROVIDERS, providerInfo, saveAiSettings, type AiProviderId, type AiSettings } from "./ai-provider";
 import type { CodexClient } from "./codex-client";
@@ -42,7 +42,7 @@ export default function AiSettingsModal({
   const [status, setStatus] = useState("");
   const info = useMemo(() => providerInfo(draft.provider), [draft.provider]);
 
-  const refreshAccount = async () => {
+  const refreshAccount = useCallback(async () => {
     if (!client || !connected) {
       setAccount(null);
       return;
@@ -52,7 +52,7 @@ export default function AiSettingsModal({
     } catch (error) {
       setStatus(String(error instanceof Error ? error.message : error));
     }
-  };
+  }, [client, connected]);
 
   useEffect(() => {
     refreshAccount();
@@ -63,7 +63,7 @@ export default function AiSettingsModal({
     };
     client.addEventListener("notification", onNotification);
     return () => client.removeEventListener("notification", onNotification);
-  }, [client, connected]);
+  }, [client, refreshAccount]);
 
   useEffect(() => {
     setSecret("");

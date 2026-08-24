@@ -45,6 +45,9 @@ yarn-error.log*
 /outputs/
 /work/
 
+# pet generation QA artifacts are useful locally but are not runtime assets
+/design/pet-runs/
+
 # local workbench runtime artifacts
 .codex-*.log
 .codex-eslint-plan.json
