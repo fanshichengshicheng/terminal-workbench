@@ -25,12 +25,17 @@ import {
 } from "@xyflow/react";
 import {
   Archive,
+  ArrowDown,
+  ArrowUp,
   Bot,
   Brush,
+  BringToFront,
   ChevronDown,
   FileCode2,
+  FileJson,
   FolderOpen,
   GitFork,
+  ImageDown,
   ImagePlus,
   ListFilter,
   LoaderCircle,
@@ -42,6 +47,7 @@ import {
   Plus,
   Send,
   Settings2,
+  SendToBack,
   Square,
   StickyNote,
   Terminal,
@@ -94,6 +100,37 @@ const absoluteNodePosition = (node:CanvasNode,nodes:CanvasNode[]) => {
   return position;
 };
 const sortCanvasNodes = (items:CanvasNode[]) => [...items.filter(node=>node.type==="group"),...items.filter(node=>node.type!=="group")];
+
+const safeFilename = (value:string) => Array.from(value.trim().replace(/[<>:"/\\|?*]/g,"-")).filter(character=>character.charCodeAt(0)>=32).join("").replace(/\s+/g," ").slice(0,80)||"canvas";
+const downloadFile = (filename:string,content:BlobPart,type:string) => {
+  const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),link=document.createElement("a");
+  link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();window.setTimeout(()=>URL.revokeObjectURL(url),0);
+};
+const serializableCanvasNodes = (items:CanvasNode[]) => items.map(node=>{
+  const {data,...rest}=node;
+  const safeData={...data};
+  delete safeData.update;delete safeData.remove;delete safeData.ungroup;
+  return {...rest,data:safeData};
+});
+const escapeXml = (value:string) => value.replace(/[&<>"']/g,character=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&apos;"}[character]||character));
+const svgLines = (value:string,max=42) => value.split(/\r?\n/).flatMap(line=>line.match(new RegExp(`.{1,${max}}`,"g"))||[""]).slice(0,8);
+const buildCanvasSvg = (project:ProjectWorkspaceProject,nodes:CanvasNode[],edges:Edge[]) => {
+  const pad=42,positions=nodes.map(node=>({node,position:absoluteNodePosition(node,nodes),width:nodeWidth(node),height:nodeHeight(node)}));
+  const minX=positions.length?Math.min(...positions.map(item=>item.position.x)):0,minY=positions.length?Math.min(...positions.map(item=>item.position.y)):0;
+  const maxX=positions.length?Math.max(...positions.map(item=>item.position.x+item.width)):720,maxY=positions.length?Math.max(...positions.map(item=>item.position.y+item.height)):460;
+  const width=Math.max(720,maxX-minX+pad*2),height=Math.max(460,maxY-minY+pad*2),offset=(point:{x:number;y:number})=>({x:point.x-minX+pad,y:point.y-minY+pad}),byId=new Map(positions.map(item=>[item.node.id,item]));
+  const layer=(node:CanvasNode)=>typeof node.zIndex==="number"?node.zIndex:0;
+  const renderNodes=[...positions].sort((a,b)=>{if(a.node.type!==b.node.type){if(a.node.type==="group")return-1;if(b.node.type==="group")return 1}return layer(a.node)-layer(b.node)});
+  const edgeMarkup=edges.map(edge=>{const source=byId.get(edge.source),target=byId.get(edge.target);if(!source||!target)return"";const a=offset({x:source.position.x+source.width/2,y:source.position.y+source.height/2}),b=offset({x:target.position.x+target.width/2,y:target.position.y+target.height/2});return`<path d="M ${a.x} ${a.y} L ${b.x} ${b.y}" fill="none" stroke="#8d9690" stroke-width="2" marker-end="url(#arrow)"/>`}).join("");
+  const nodeMarkup=renderNodes.map(({node,position,width:nodeW,height:nodeH})=>{const point=offset(position),title=escapeXml(node.data.title||"未命名卡片"),color=node.data.groupColor||"#d5a900",headerHeight=node.type==="group"?38:34;
+    if(node.type==="group")return`<g><rect x="${point.x}" y="${point.y}" width="${nodeW}" height="${nodeH}" fill="#e8ebe6" fill-opacity=".84" stroke="${color}" stroke-width="2"/><rect x="${point.x}" y="${point.y}" width="${nodeW}" height="${headerHeight}" fill="#f6f7f3" fill-opacity=".96" stroke="${color}" stroke-width="2"/><text x="${point.x+12}" y="${point.y+24}" fill="#202322" font-family="Arial, sans-serif" font-size="12" font-weight="700">${title}</text><text x="${point.x+12}" y="${point.y+nodeH-14}" fill="#7b827e" font-family="Arial, sans-serif" font-size="9">GROUP FRAME</text></g>`;
+    const body=svgLines(node.data.text||"").map((line,index)=>`<text x="${point.x+14}" y="${point.y+headerHeight+24+index*17}" fill="#252826" font-family="Arial, sans-serif" font-size="11">${escapeXml(line)}</text>`).join("");
+    const image=node.type==="image"&&node.data.image?`<image href="${escapeXml(node.data.image)}" x="${point.x+2}" y="${point.y+headerHeight+2}" width="${Math.max(0,nodeW-4)}" height="${Math.max(0,nodeH-headerHeight-4)}" preserveAspectRatio="xMidYMid meet"/>`:"";
+    const strokes=node.type==="doodle"?(node.data.strokes||[]).map(stroke=>`<path d="${escapeXml(stroke.path)}" transform="translate(${point.x} ${point.y+headerHeight}) scale(${(nodeW/1000).toFixed(4)} ${(Math.max(0,nodeH-headerHeight)/600).toFixed(4)})" fill="none" stroke="${escapeXml(stroke.color)}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>`).join(""):"";
+    return`<g><rect x="${point.x}" y="${point.y}" width="${nodeW}" height="${nodeH}" fill="#fff" stroke="#202322" stroke-width="1.5"/><rect x="${point.x}" y="${point.y}" width="${nodeW}" height="${headerHeight}" fill="#f0f1ee" stroke="#c8cbc8" stroke-width="1"/><text x="${point.x+10}" y="${point.y+22}" fill="#202322" font-family="Arial, sans-serif" font-size="11" font-weight="700">${title}</text>${image}${node.type!=="image"?body:""}${node.type==="response"?`<text x="${point.x+14}" y="${point.y+headerHeight+17}" fill="#202322" font-family="Arial, sans-serif" font-size="11">AI RESPONSE</text>`:""}${strokes}</g>`;
+  }).join("");
+  return`<svg xmlns="http://www.w3.org/2000/svg" width="${Math.ceil(width)}" height="${Math.ceil(height)}" viewBox="0 0 ${Math.ceil(width)} ${Math.ceil(height)}" role="img" aria-label="${escapeXml(project.title)} 画布导出"><defs><pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse"><path d="M 24 0 L 0 0 0 24" fill="none" stroke="#e1e4df" stroke-width="1"/><circle cx="0" cy="0" r="1" fill="#c7ccc7"/></pattern><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#8d9690"/></marker></defs><rect width="100%" height="100%" fill="#fafbf8"/><rect x="0" y="0" width="100%" height="100%" fill="url(#grid)"/><text x="${pad}" y="24" fill="#747977" font-family="Arial, sans-serif" font-size="10" letter-spacing="2">${escapeXml(project.title.toUpperCase())} / CANVAS</text>${edgeMarkup}${nodeMarkup}</svg>`;
+};
 
 const activityLabel = (status:CodexActivityStatus,count:number) => status==="running"?`正在执行 ${count} 项操作`:status==="failed"?`${count} 项操作出现失败`:`已完成 ${count} 项操作`;
 
@@ -172,7 +209,14 @@ function GroupNode({id,selected,data}:NodeProps<CanvasNode>) {
 
 const nodeTypes = { note: NoteNode, image: ImageNode, response: ResponseNode, doodle: DoodleNode, group: GroupNode };
 
-function ProjectWorkspaceInner({project,close}:{project:ProjectWorkspaceProject;close:()=>void}) {
+function ProjectTitleEditor({title,rename}:{title:string;rename:(title:string)=>void}) {
+  const[editing,setEditing]=useState(false),[draft,setDraft]=useState(title);
+  const begin=()=>{setDraft(title);setEditing(true)};
+  const commit=()=>{const next=draft.trim();if(next)rename(next);else setDraft(title);setEditing(false)};
+  return <div className="project-workspace-title"><small>PROJECT WORKSPACE</small>{editing?<input className="project-title-input" value={draft} onChange={event=>setDraft(event.target.value)} onBlur={commit} onKeyDown={event=>{if(event.key==="Enter"){event.preventDefault();commit()}if(event.key==="Escape"){event.preventDefault();setDraft(title);setEditing(false)}}}/>:<div className="project-title-display"><h1>{title}</h1><button onClick={begin} title="重命名项目" aria-label="重命名项目"><PencilLine size={14}/></button></div>}</div>;
+}
+
+function ProjectWorkspaceInner({project,rename,close}:{project:ProjectWorkspaceProject;rename:(title:string)=>void;close:()=>void}) {
   const saveTimer=useRef<number|null>(null),latestState=useRef<ProjectWorkspaceState|null>(null),imagePicker=useRef<HTMLInputElement>(null),chatImagePicker=useRef<HTMLInputElement>(null),activeThreadIdRef=useRef<string|null>(null),threadSyncRef=useRef(0);
   const[projectDirectory,setProjectDirectory]=useState("");
   const[threads,setThreads]=useState<StoredProjectThread[]>([]),[activeThreadId,setActiveThreadId]=useState<string|null>(null);
@@ -202,7 +246,7 @@ function ProjectWorkspaceInner({project,close}:{project:ProjectWorkspaceProject;
   const updateNode=useCallback((id:string,patch:Partial<CanvasNodeData>)=>setNodes(current=>current.map(node=>node.id===id?{...node,data:{...node.data,...patch}}:node)),[setNodes]);
   const ungroupNode=useCallback((groupId:string)=>setNodes(current=>sortCanvasNodes(current.filter(node=>node.id!==groupId).map(node=>{
     if(node.parentId!==groupId)return node;
-    return {...node,position:absoluteNodePosition(node,current),parentId:undefined,extent:undefined,zIndex:undefined};
+     return {...node,position:absoluteNodePosition(node,current),parentId:undefined,extent:undefined};
   }))),[setNodes]);
   const hydrateNode=useCallback((node:CanvasNode):CanvasNode=>({...node,data:{...node.data,update:updateNode,remove:removeNode,ungroup:ungroupNode}}),[removeNode,ungroupNode,updateNode]);
   const usingCodex=aiSettings.provider==="codex",selectedProvider=providerInfo(aiSettings.provider);
@@ -304,15 +348,40 @@ function ProjectWorkspaceInner({project,close}:{project:ProjectWorkspaceProject;
     const targets=new Set(ungroupIds);
     setNodes(current=>sortCanvasNodes(current.filter(node=>!targets.has(node.id)).map(node=>{
       if(!node.parentId||!targets.has(node.parentId))return node;
-      return {...node,position:absoluteNodePosition(node,current),parentId:undefined,extent:undefined,zIndex:undefined};
+       return {...node,position:absoluteNodePosition(node,current),parentId:undefined,extent:undefined};
     })));
   };
   const setSelectedGroupColor=(color:string)=>selectedGroups.forEach(node=>updateNode(node.id,{groupColor:color}));
+  type LayerAction="front"|"up"|"down"|"back";
+  const changeLayer=(action:LayerAction)=>{
+    const selectedIds=new Set(selectedNodes.map(node=>node.id));
+    if(!selectedIds.size)return;
+    setNodes(current=>{
+      const groups=new Map<string,CanvasNode[]>();
+      current.forEach(node=>{const key=node.parentId||"__root__";groups.set(key,[...(groups.get(key)||[]),node])});
+      const replacements=new Map<string,CanvasNode>();
+      for(const siblings of groups.values()){
+        if(!siblings.some(node=>selectedIds.has(node.id)))continue;
+        const ordered=siblings.map((node,index)=>({node,index})).sort((left,right)=>{const zLeft=typeof left.node.zIndex==="number"?left.node.zIndex:0,zRight=typeof right.node.zIndex==="number"?right.node.zIndex:0;return zLeft-zRight||left.index-right.index}).map(item=>item.node);
+        if(action==="front"){const chosen=ordered.filter(node=>selectedIds.has(node.id));ordered.splice(0,ordered.length,...ordered.filter(node=>!selectedIds.has(node.id)),...chosen)}
+        if(action==="back"){const chosen=ordered.filter(node=>selectedIds.has(node.id));ordered.splice(0,ordered.length,...chosen,...ordered.filter(node=>!selectedIds.has(node.id)))}
+        if(action==="up")for(let index=ordered.length-2;index>=0;index--)if(selectedIds.has(ordered[index].id)&&!selectedIds.has(ordered[index+1].id))[ordered[index],ordered[index+1]]=[ordered[index+1],ordered[index]];
+        if(action==="down")for(let index=1;index<ordered.length;index++)if(selectedIds.has(ordered[index].id)&&!selectedIds.has(ordered[index-1].id))[ordered[index],ordered[index-1]]=[ordered[index-1],ordered[index]];
+        const start=siblings[0]?.parentId?1:0;ordered.forEach((node,index)=>replacements.set(node.id,{...node,zIndex:start+index}));
+      }
+      return current.map(node=>replacements.get(node.id)||node);
+    });
+  };
+  const exportCanvasJson=()=>{
+    const payload={format:"terminal-workbench-canvas",version:1,projectId:project.id,projectTitle:project.title,exportedAt:new Date().toISOString(),nodes:serializableCanvasNodes(nodes),edges};
+    downloadFile(`${safeFilename(project.title)}-canvas.json`,JSON.stringify(payload,null,2),"application/json;charset=utf-8");
+  };
+  const exportCanvasSvg=()=>downloadFile(`${safeFilename(project.title)}-canvas.svg`,buildCanvasSvg(project,nodes,edges),"image/svg+xml;charset=utf-8");
 
   return <main className={`project-workspace ${leftOpen?"left-open":"left-closed"} ${rightOpen?"right-open":"right-closed"}`}>
-    <header className="project-workspace-head"><button onClick={close} className="project-back">← 项目列表</button><div><small>{project.id} / PROJECT WORKSPACE</small><h1>{project.title}</h1></div><div className="project-directory"><FolderOpen size={15}/><input value={projectDirectory} onChange={event=>setProjectDirectory(event.target.value)} placeholder="设置本机项目目录，例如 G:\\Git_project\\..."/><button onClick={pickProjectDirectory} disabled={directoryPicking} title="选择本机项目目录"><FolderOpen size={16}/></button></div><div className="project-ai-status">{usingCodex&&activeThread&&<span className="codex-model-chip">{modelSummary}</span>}<span className={`codex-connection ${connection}`}><i/>{connection==="online"?"CODEX ONLINE":connection==="connecting"?"CONNECTING":"CODEX OFFLINE"}</span><button onClick={()=>setSettingsOpen(true)} title="AI 服务设置"><Settings2 size={16}/></button></div></header>
+    <header className="project-workspace-head"><button onClick={close} className="project-back">← 项目列表</button><ProjectTitleEditor title={project.title} rename={rename}/><div className="project-directory"><FolderOpen size={15}/><input value={projectDirectory} onChange={event=>setProjectDirectory(event.target.value)} placeholder="设置本机项目目录，例如 G:\\Git_project\\..."/><button onClick={pickProjectDirectory} disabled={directoryPicking} title="选择本机项目目录"><FolderOpen size={16}/></button></div><div className="project-ai-status">{usingCodex&&activeThread&&<span className="codex-model-chip">{modelSummary}</span>}<span className={`codex-connection ${connection}`}><i/>{connection==="online"?"CODEX ONLINE":connection==="connecting"?"CONNECTING":"CODEX OFFLINE"}</span><button onClick={()=>setSettingsOpen(true)} title="AI 服务设置"><Settings2 size={16}/></button></div></header>
     <aside className="project-thread-rail"><header><button onClick={()=>setLeftOpen(value=>!value)} title={leftOpen?"收起对话栏":"展开对话栏"}><PanelLeftClose size={17}/></button>{leftOpen&&<><b>项目对话</b><button onClick={createThread} title="新建 Codex 对话"><MessageSquarePlus size={17}/></button></>}</header>{leftOpen&&<div className="project-thread-list">{threads.map(thread=><article key={thread.id} className={thread.id===activeThreadId?"active":""}><button className="thread-main" onClick={()=>openThread(thread.id)}><span><Bot size={14}/></span><b>{thread.name}</b><p>{thread.preview||"等待对话"}</p><time>{new Date(thread.updatedAt).toLocaleString("zh-CN",{month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"})}</time></button><div><button onClick={()=>renameThread(thread.id)} title="重命名对话"><PencilLine size={13}/></button><button onClick={()=>forkThread(thread.id)} title="分叉对话"><GitFork size={13}/></button><button onClick={()=>archiveThread(thread.id)} title="归档对话"><Archive size={13}/></button></div></article>)}{!threads.length&&<div className="thread-empty"><Bot size={24}/><p>设置项目目录后，即可创建多个独立 Codex 对话。</p><button onClick={createThread}><Plus size={14}/>新建对话</button></div>}</div>}</aside>
-    <section className="project-canvas"><header><div><button onClick={addNote} title="添加文字卡片"><StickyNote size={16}/>文字</button><button onClick={()=>imagePicker.current?.click()} title="添加图片"><ImagePlus size={16}/>图片</button><button onClick={addDoodle} title="添加自由涂鸦"><Brush size={16}/>涂鸦</button><button className={connectMode?"active":""} onClick={toggleConnectMode} title={connectMode?"退出连线模式":"进入连线模式；依次点击两个卡片"}><Waypoints size={16}/>连线</button><input ref={imagePicker} type="file" accept="image/*" hidden onChange={pickImage}/></div><span>{connectMode?(connectSource?"LINE / 选择终点":"LINE / 选择起点"):`CANVAS / ${nodes.length} ITEMS · 可直接拖入图片`}</span><button onClick={()=>setRightOpen(value=>!value)} title={rightOpen?"收起 AI 面板":"展开 AI 面板"}><PanelRightClose size={17}/></button></header>{selectedNodes.length>0&&<div className="project-selection-toolbar nodrag nopan"><b>已选 {selectedNodes.length} 项</b>{selectedNodes.length===1&&<button onClick={renameSelected} title="重命名"><PencilLine size={13}/>重命名</button>}{groupableSelection.length>=2&&<button onClick={createGroup} title="将选中的卡片编组"><GitFork size={13}/>编组</button>}{ungroupIds.length>0&&<button onClick={ungroupSelection} title="解除编组"><Waypoints size={13}/>解除编组</button>}{selectedGroups.length>0&&<div className="project-group-colors" aria-label="编组颜色">{groupColors.map(color=><button key={color} className="project-group-color" style={{background:color}} onClick={()=>setSelectedGroupColor(color)} aria-label={`设置编组颜色 ${color}`} />)}</div>}<button onClick={deleteSelection} title="删除选中项"><Trash2 size={13}/>删除</button><button onClick={clearSelection} title="清除选择"><X size={13}/></button></div>}<div className={`project-flow ${connectMode?"connecting":""}`} onDragOver={event=>{event.preventDefault();event.dataTransfer.dropEffect="copy"}} onDrop={dropImage}><ReactFlow nodes={nodes.map(node=>connectSource===node.id?{...node,className:"connect-source"}:node)} edges={edges} nodeTypes={nodeTypes} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} onNodeClick={connectNode} onPaneClick={()=>setConnectSource(null)} selectionOnDrag selectionKeyCode={["Shift","Meta"]} multiSelectionKeyCode={["Control","Shift","Meta"]} selectionMode={SelectionMode.Partial} panOnDrag={[1,2]} connectionMode={ConnectionMode.Loose} defaultEdgeOptions={{type:"smoothstep",style:{stroke:"#171918",strokeWidth:2}}} connectionLineStyle={{stroke:"#f2d600",strokeWidth:2}} snapToGrid snapGrid={[12,12]} fitView minZoom={.15} maxZoom={2}><Background variant={BackgroundVariant.Dots} gap={24} size={1}/><MiniMap pannable zoomable/><Controls showInteractive={false}/></ReactFlow></div></section>
+    <section className="project-canvas"><header><div><button onClick={addNote} title="添加文字卡片"><StickyNote size={16}/>文字</button><button onClick={()=>imagePicker.current?.click()} title="添加图片"><ImagePlus size={16}/>图片</button><button onClick={addDoodle} title="添加自由涂鸦"><Brush size={16}/>涂鸦</button><button className={connectMode?"active":""} onClick={toggleConnectMode} title={connectMode?"退出连线模式":"进入连线模式；依次点击两个卡片"}><Waypoints size={16}/>连线</button><div className="project-canvas-export" aria-label="导出画布"><button onClick={exportCanvasJson} title="导出可恢复的 JSON 数据"><FileJson size={15}/>JSON</button><button onClick={exportCanvasSvg} title="导出画布 SVG 结构快照"><ImageDown size={15}/>SVG</button></div><input ref={imagePicker} type="file" accept="image/*" hidden onChange={pickImage}/></div><span>{connectMode?(connectSource?"LINE / 选择终点":"LINE / 选择起点"):`CANVAS / ${nodes.length} ITEMS · 可直接拖入图片`}</span><button onClick={()=>setRightOpen(value=>!value)} title={rightOpen?"收起 AI 面板":"展开 AI 面板"}><PanelRightClose size={17}/></button></header>{selectedNodes.length>0&&<div className="project-selection-toolbar nodrag nopan"><b>已选 {selectedNodes.length} 项</b>{selectedNodes.length===1&&<button onClick={renameSelected} title="重命名"><PencilLine size={13}/>重命名</button>}{groupableSelection.length>=2&&<button onClick={createGroup} title="将选中的卡片编组"><GitFork size={13}/>编组</button>}{ungroupIds.length>0&&<button onClick={ungroupSelection} title="解除编组"><Waypoints size={13}/>解除编组</button>}{<div className="project-layer-controls" aria-label="图层顺序"><button onClick={()=>changeLayer("front")} title="置顶"><BringToFront size={13}/>置顶</button><button onClick={()=>changeLayer("up")} title="上移一层"><ArrowUp size={13}/>上移</button><button onClick={()=>changeLayer("down")} title="下移一层"><ArrowDown size={13}/>下移</button><button onClick={()=>changeLayer("back")} title="置底"><SendToBack size={13}/>置底</button></div>}{selectedGroups.length>0&&<div className="project-group-colors" aria-label="编组颜色">{groupColors.map(color=><button key={color} className="project-group-color" style={{background:color}} onClick={()=>setSelectedGroupColor(color)} aria-label={`设置编组颜色 ${color}`} />)}</div>}<button onClick={deleteSelection} title="删除选中项"><Trash2 size={13}/>删除</button><button onClick={clearSelection} title="清除选择"><X size={13}/></button></div>}<div className={`project-flow ${connectMode?"connecting":""}`} onDragOver={event=>{event.preventDefault();event.dataTransfer.dropEffect="copy"}} onDrop={dropImage}><ReactFlow nodes={nodes.map(node=>connectSource===node.id?{...node,className:"connect-source"}:node)} edges={edges} nodeTypes={nodeTypes} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} onNodeClick={connectNode} onPaneClick={()=>setConnectSource(null)} selectionOnDrag selectionKeyCode={["Shift","Meta"]} multiSelectionKeyCode={["Control","Shift","Meta"]} selectionMode={SelectionMode.Partial} panOnDrag={[1,2]} connectionMode={ConnectionMode.Loose} defaultEdgeOptions={{type:"smoothstep",style:{stroke:"#171918",strokeWidth:2}}} connectionLineStyle={{stroke:"#f2d600",strokeWidth:2}} snapToGrid snapGrid={[12,12]} fitView minZoom={.15} maxZoom={2}><Background variant={BackgroundVariant.Dots} gap={24} size={1}/><MiniMap pannable zoomable/><Controls showInteractive={false}/></ReactFlow></div></section>
     <aside className="project-codex-panel">{rightOpen&&<>
       <header><div><small>{usingCodex?modelSummary:"TEXT ASSISTANT"}</small><b>{usingCodex?activeThread?.name||"未选择对话":`${selectedProvider.label} / ${aiSettings.model}`}</b></div>{usingCodex&&<button className="operation-visibility" onClick={()=>setShowAllOperations(value=>!value)} title={showAllOperations?"精简操作记录":"显示全部操作"}><ListFilter size={14}/><span>{showAllOperations?"精简":"显示全部操作"}</span></button>}{usingCodex&&activeThread&&<button onClick={()=>renameThread(activeThread.id)} title="重命名当前对话"><PencilLine size={16}/></button>}<button onClick={()=>setSettingsOpen(true)} title="AI 服务设置"><Settings2 size={16}/></button></header>
       {visibleConnectionError&&<div className="codex-error"><b>{usingCodex?"CODEX CONNECTION":`${selectedProvider.label.toUpperCase()} CONNECTION`}</b><p>{visibleConnectionError}</p><div>{usingCodex?<><code>内置进程 / 网页桥接</code><button onClick={retryCodex}>重新连接</button></>:<button onClick={()=>setSettingsOpen(true)}>检查设置</button>}</div></div>}
@@ -328,6 +397,6 @@ function ProjectWorkspaceInner({project,close}:{project:ProjectWorkspaceProject;
   </main>;
 }
 
-export default function ProjectWorkspace(props:{project:ProjectWorkspaceProject;close:()=>void}) {
+export default function ProjectWorkspace(props:{project:ProjectWorkspaceProject;rename:(title:string)=>void;close:()=>void}) {
   return <ReactFlowProvider><ProjectWorkspaceInner {...props}/></ReactFlowProvider>;
 }

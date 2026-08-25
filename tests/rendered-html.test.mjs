@@ -247,9 +247,10 @@ test("ships the Qixun sprite-v2 dorm with a Spine import fallback", async () => 
 });
 
 test("ships a persistent canvas with rename, selection, and movable groups", async () => {
-  const [workspace, css] = await Promise.all([
+  const [workspace, css, workbench] = await Promise.all([
     readFile(new URL("../app/ProjectWorkspace.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/project-workspace.css", import.meta.url), "utf8"),
+    readFile(new URL("../app/Workbench.tsx", import.meta.url), "utf8"),
   ]);
 
   assert.match(workspace, /type CanvasNode = Node<CanvasNodeData,[^;]*"group"/);
@@ -263,8 +264,20 @@ test("ships a persistent canvas with rename, selection, and movable groups", asy
   assert.match(workspace, /extent:"parent"/);
   assert.match(workspace, /const createGroup/);
   assert.match(workspace, /const ungroupSelection/);
+  assert.match(workspace, /function ProjectTitleEditor/);
+  assert.match(workspace, /exportCanvasJson/);
+  assert.match(workspace, /terminal-workbench-canvas/);
+  assert.match(workspace, /exportCanvasSvg/);
+  assert.match(workspace, /changeLayer/);
+  assert.match(workspace, /BringToFront/);
+  assert.match(workspace, /SendToBack/);
+  assert.match(workbench, /const renameProject/);
+  assert.match(workbench, /rename={title=>setEntries/);
+  assert.match(workbench, /className="project-rename"/);
   assert.match(workspace, /project-selection-toolbar/);
   assert.match(css, /\.project-canvas-group/);
   assert.match(css, /\.project-group-color/);
   assert.match(css, /\.project-node-title-input/);
+  assert.match(css, /\.project-canvas-export/);
+  assert.match(css, /\.project-layer-controls/);
 });
