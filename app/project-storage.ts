@@ -7,7 +7,7 @@ export type StoredProjectThread = {
 
 export type StoredCanvasNode = {
   id: string;
-  type: "note" | "image" | "response" | "doodle" | "group";
+  type: "note" | "image" | "response" | "doodle" | "shape" | "group";
   position: { x: number; y: number };
   data: Record<string, unknown>;
   width?: number;

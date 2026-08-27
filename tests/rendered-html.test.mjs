@@ -275,9 +275,16 @@ test("ships a persistent canvas with rename, selection, and movable groups", asy
   assert.match(workbench, /rename={title=>setEntries/);
   assert.match(workbench, /className="project-rename"/);
   assert.match(workspace, /project-selection-toolbar/);
+  assert.match(workspace, /fontSize\?: number/);
+  assert.match(workspace, /shapeKind\?: ShapeKind/);
+  assert.match(workspace, /function ShapeNode/);
+  assert.match(workspace, /const addShape/);
+  assert.match(workspace, /project-text-size-controls/);
+  assert.match(workspace, /project-shape-menu/);
   assert.match(css, /\.project-canvas-group/);
   assert.match(css, /\.project-group-color/);
   assert.match(css, /\.project-node-title-input/);
   assert.match(css, /\.project-canvas-export/);
   assert.match(css, /\.project-layer-controls/);
+  assert.match(css, /\.project-shape-node/);
 });
