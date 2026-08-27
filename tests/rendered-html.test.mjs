@@ -278,6 +278,8 @@ test("ships a persistent canvas with rename, selection, and movable groups", asy
   assert.match(workspace, /fontSize\?: number/);
   assert.match(workspace, /shapeKind\?: ShapeKind/);
   assert.match(workspace, /function ShapeNode/);
+  assert.match(workspace, /project-pure-shape-node/);
+  assert.match(workspace, /NodeResizer isVisible=\{selected\} minWidth=\{64\}/);
   assert.match(workspace, /const addShape/);
   assert.match(workspace, /project-text-size-controls/);
   assert.match(workspace, /project-shape-menu/);
@@ -287,4 +289,5 @@ test("ships a persistent canvas with rename, selection, and movable groups", asy
   assert.match(css, /\.project-canvas-export/);
   assert.match(css, /\.project-layer-controls/);
   assert.match(css, /\.project-shape-node/);
+  assert.match(css, /\.project-pure-shape-node/);
 });
